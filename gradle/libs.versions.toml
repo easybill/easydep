@@ -1,0 +1,48 @@
+[versions]
+
+# plugins
+shadow = "7.1.2"
+
+# libs
+jjwt = "0.11.5"
+guice = "5.1.0"
+dotenv = "2.3.1"
+bouncycastle = "1.70"
+nightConfig = "3.6.6"
+annotations = "24.0.0"
+githubClient = "1.313"
+jgit = "6.4.0.202211300538-r"
+
+slf4j = "2.0.6"
+logback = "1.4.5"
+
+# testing
+junit = "5.9.2"
+
+
+[libraries]
+
+# libs
+guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }
+jgit = { group = "org.eclipse.jgit", name = "org.eclipse.jgit", version.ref = "jgit" }
+dotenv = { group = "io.github.cdimascio", name = "dotenv-java", version.ref = "dotenv" }
+githubClient = { group = "org.kohsuke", name = "github-api", version.ref = "githubClient" }
+annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
+bcprovJdk15 = { group = "org.bouncycastle", name = "bcprov-jdk15on", version.ref = "bouncycastle" }
+configToml = { group = "com.electronwill.night-config", name = "toml", version.ref = "nightConfig" }
+
+jjwt-api = { group = "io.jsonwebtoken", name = "jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { group = "io.jsonwebtoken", name = "jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { group = "io.jsonwebtoken", name = "jjwt-jackson", version.ref = "jjwt" }
+
+slf4j = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+logback = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
+
+# testing
+junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
+junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
+
+
+[plugins]
+
+shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
