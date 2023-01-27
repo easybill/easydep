@@ -24,7 +24,7 @@ dependencies {
   implementation(libs.slf4j)
   implementation(libs.dotenv)
   implementation(libs.jjwt.api)
-  implementation(libs.configToml)
+  implementation(libs.jacksonToml)
   implementation(libs.bcprovJdk15)
   implementation(libs.githubClient)
 

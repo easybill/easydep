@@ -7,8 +7,8 @@ shadow = "7.1.2"
 jjwt = "0.11.5"
 guice = "5.1.0"
 dotenv = "2.3.1"
+jackson = "2.14.1"
 bouncycastle = "1.70"
-nightConfig = "3.6.6"
 annotations = "24.0.0"
 githubClient = "1.313"
 jgit = "6.4.0.202211300538-r"
@@ -29,7 +29,7 @@ dotenv = { group = "io.github.cdimascio", name = "dotenv-java", version.ref = "d
 githubClient = { group = "org.kohsuke", name = "github-api", version.ref = "githubClient" }
 annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
 bcprovJdk15 = { group = "org.bouncycastle", name = "bcprov-jdk15on", version.ref = "bouncycastle" }
-configToml = { group = "com.electronwill.night-config", name = "toml", version.ref = "nightConfig" }
+jacksonToml = { group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-toml", version.ref = "jackson" }
 
 jjwt-api = { group = "io.jsonwebtoken", name = "jjwt-api", version.ref = "jjwt" }
 jjwt-impl = { group = "io.jsonwebtoken", name = "jjwt-impl", version.ref = "jjwt" }

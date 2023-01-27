@@ -18,20 +18,23 @@ import org.kohsuke.github.GHRelease;
 @Singleton
 final class ReleaseTaskProvider {
 
+  private final Provider<TagCheckTask> tagCheckTaskProvider;
   private final Provider<GitRepoInitTask> gitRepoInitTaskProvider;
   private final Provider<DeploymentSymlinkTask> symlinkTaskProvider;
 
   @Inject
   public ReleaseTaskProvider(
+    @NotNull Provider<TagCheckTask> tagCheckTaskProvider,
     @NotNull Provider<GitRepoInitTask> gitRepoInitTaskProvider,
     @NotNull Provider<DeploymentSymlinkTask> symlinkTaskProvider
   ) {
+    this.tagCheckTaskProvider = tagCheckTaskProvider;
     this.gitRepoInitTaskProvider = gitRepoInitTaskProvider;
     this.symlinkTaskProvider = symlinkTaskProvider;
   }
 
   public @NotNull ChainedTask<GHRelease> buildDeployTaskChain() {
-    return new TagCheckTask()
+    return this.tagCheckTaskProvider.get()
       .addLeafTask(this.gitRepoInitTaskProvider.get())
       .addLeafTask(new GitPrepareTask())
       .addLeafTask(new DeploymentDirCleanupTask())
