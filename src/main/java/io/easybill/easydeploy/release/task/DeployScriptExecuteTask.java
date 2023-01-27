@@ -18,8 +18,7 @@ public final class DeployScriptExecuteTask extends ChainedTask<Pair<GHRelease, P
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DeployScriptExecuteTask.class);
 
-  private static final String DEPLOY_DIR = ".deploy";
-  private static final String DEPLOY_SCRIPT_NAME = "./execute.sh";
+  private static final String DEPLOY_SCRIPT_PATH = ".deploy/execute.sh";
 
   public DeployScriptExecuteTask() {
     super("Deployment Script Execute");
@@ -30,13 +29,12 @@ public final class DeployScriptExecuteTask extends ChainedTask<Pair<GHRelease, P
     @NotNull TaskExecutionContext<?, ?> context,
     @NotNull Pair<GHRelease, Path> input
   ) throws Exception {
-    // resolve the deployment script dir & log output path
-    var deployDir = input.getRight().resolve(DEPLOY_DIR);
+    // resolve the log output path
     var logOutputFile = File.createTempFile("deploy-log-output", null);
 
     // build and start the process
-    var process = new ProcessBuilder("bash", "-c", DEPLOY_SCRIPT_NAME)
-      .directory(deployDir.toFile())
+    var process = new ProcessBuilder("bash", DEPLOY_SCRIPT_PATH)
+      .directory(input.getRight().toFile())
       .redirectErrorStream(true)
       .redirectOutput(logOutputFile)
       .start();

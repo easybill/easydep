@@ -26,8 +26,11 @@ public final class ReleaseDirectoryHandler {
     this.baseRepositoryDirectory = this.deploymentBaseDirectory.resolve(BASE_REPO_DIR_NAME);
 
     // the current deployment directory is used as the symlink to the current release directory
-    var currentDeploymentDirectory = env.get("EASYDEP_DEPLOY_CURRENT_DIRECTORY", "current");
-    this.currentDeploymentDirectory = Path.of(currentDeploymentDirectory).normalize().toAbsolutePath();
+    var currentDeploymentDirectory = env.get("EASYDEP_DEPLOY_LINK_DIRECTORY", "current");
+    this.currentDeploymentDirectory = this.deploymentBaseDirectory
+      .resolve(currentDeploymentDirectory)
+      .normalize()
+      .toAbsolutePath();
   }
 
   public @NotNull Path baseRepositoryDirectory() {
