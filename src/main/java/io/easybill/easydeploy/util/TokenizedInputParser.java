@@ -27,6 +27,11 @@ public final class TokenizedInputParser {
     // match each group input and sort out invalid items
     Map<String, String> target = new HashMap<>();
     for (var group : groups) {
+      // skip blank lines
+      if (group.isBlank()) {
+        continue;
+      }
+
       var matcher = TOKEN_PATTERN.matcher(group);
       if (matcher.matches()) {
         // check for duplicate keys
@@ -37,7 +42,7 @@ public final class TokenizedInputParser {
             matcher.group(1), knownValue, matcher.group(2));
         }
       } else {
-        LOGGER.warn("Unexpected token encountered: {} - Should be in the format \"key:value;\"", group);
+        LOGGER.warn("Unexpected token encountered: {} - Should be in the format \"key:value;;\"", group);
       }
     }
 
