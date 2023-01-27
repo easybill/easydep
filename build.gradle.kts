@@ -52,7 +52,6 @@ tasks.withType<JavaCompile>().configureEach {
 
 tasks.withType<ShadowJar> {
   archiveFileName.set("easydep.jar")
-  minimize()
 }
 
 tasks.withType<Checkstyle> {
