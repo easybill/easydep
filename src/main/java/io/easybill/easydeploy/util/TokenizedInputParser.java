@@ -13,7 +13,7 @@ public final class TokenizedInputParser {
   private static final Logger LOGGER = LoggerFactory.getLogger(TokenizedInputParser.class);
 
   private static final String VALUE_DELIMITER = ";;";
-  private static final Pattern TOKEN_PATTERN = Pattern.compile("^([a-zA-Z0-9]+):(.+)$");
+  private static final Pattern TOKEN_PATTERN = Pattern.compile("^([a-zA-Z0-9_.\\- ]+):(.+)$");
 
   private TokenizedInputParser() {
     throw new UnsupportedOperationException();
