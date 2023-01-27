@@ -33,6 +33,10 @@ public final class ReleaseDirectoryHandler {
       .toAbsolutePath();
   }
 
+  public @NotNull Path deploymentBaseDirectory() {
+    return this.deploymentBaseDirectory;
+  }
+
   public @NotNull Path baseRepositoryDirectory() {
     return this.baseRepositoryDirectory;
   }

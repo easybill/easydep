@@ -3,6 +3,7 @@ package io.easybill.easydeploy.release;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import io.easybill.easydeploy.release.task.BaseDeploymentDirCleanupTask;
 import io.easybill.easydeploy.release.task.DeployScriptExecuteTask;
 import io.easybill.easydeploy.release.task.DeploymentDirCleanupTask;
 import io.easybill.easydeploy.release.task.DeploymentSymlinkTask;
@@ -21,16 +22,19 @@ final class ReleaseTaskProvider {
   private final Provider<TagCheckTask> tagCheckTaskProvider;
   private final Provider<GitRepoInitTask> gitRepoInitTaskProvider;
   private final Provider<DeploymentSymlinkTask> symlinkTaskProvider;
+  private final Provider<BaseDeploymentDirCleanupTask> baseDirCleanupTaskProvider;
 
   @Inject
   public ReleaseTaskProvider(
     @NotNull Provider<TagCheckTask> tagCheckTaskProvider,
     @NotNull Provider<GitRepoInitTask> gitRepoInitTaskProvider,
-    @NotNull Provider<DeploymentSymlinkTask> symlinkTaskProvider
+    @NotNull Provider<DeploymentSymlinkTask> symlinkTaskProvider,
+    @NotNull Provider<BaseDeploymentDirCleanupTask> baseDirCleanupTaskProvider
   ) {
     this.tagCheckTaskProvider = tagCheckTaskProvider;
     this.gitRepoInitTaskProvider = gitRepoInitTaskProvider;
     this.symlinkTaskProvider = symlinkTaskProvider;
+    this.baseDirCleanupTaskProvider = baseDirCleanupTaskProvider;
   }
 
   public @NotNull ChainedTask<GHRelease> buildDeployTaskChain() {
@@ -39,7 +43,8 @@ final class ReleaseTaskProvider {
       .addLeafTask(new GitPrepareTask())
       .addLeafTask(new DeploymentDirCleanupTask())
       .addLeafTask(new DeployScriptExecuteTask())
-      .addLeafTask(this.symlinkTaskProvider.get());
+      .addLeafTask(this.symlinkTaskProvider.get())
+      .addLeafTask(this.baseDirCleanupTaskProvider.get());
   }
 
   public @NotNull ChainedTask<Pair<GHRelease, Path>> buildDirectorySymlinkTaskChain() {
