@@ -22,7 +22,8 @@ sudo apt install zulu17-jre-headless
   can create one on the same page as the app id, in the section "Private Keys". **Note:** When setting the key as an
   environment variable, make sure that the key is in one single line **AND** that there is a space after the key header
   delimiter and before the key footer delimiter! It should look
-  like `-----BEGIN RSA PRIVATE KEY----- <key data> -----END RSA PRIVATE KEY-----`
+  like `-----BEGIN RSA PRIVATE KEY----- <key data> -----END RSA PRIVATE KEY-----`. The value can also ba the path to the
+  key to load.
 * `EASYDEP_GITHUB_REPO_ORG`: The organization where the GitHub app is installed and where the repository is located from
   which releases are to be pulled. Note that the setting must be an organization, setting it to a username will not
   work.
@@ -73,8 +74,8 @@ Group=www-data
 Restart=always
 RestartSec=10
 
-EnvironmentFile=/etc/default/easydep
 WorkingDirectory=/usr/lib/easydep
+EnvironmentFile=/etc/default/easydep
 ExecStart=/bin/java -Xms256M -Xmx256M -XX:+UseZGC -XX:+PerfDisableSharedMem -XX:+DisableExplicitGC -jar easydep.jar
 
 [Install]
@@ -119,6 +120,12 @@ or `live2`). If no label value is set for one of the labels, the deployment will
 required. To make a label not required the name of the label needs to be suffixed with `?`. However, the name of the
 label will be without the question mark (for example the supplied key is `stage?`, the label name is `stage`). If a
 non-required label is given, but a mismatched local value was found, the release gets ignored anyway.
+
+### Compile from source
+
+1. Clone this repository
+2. Compile with gradle. On windows run `gradlew.bat build` on unix use `./gradlew build`
+3. Take the final file from `build/libs/easydep.jar`
 
 ### How does it work?
 
