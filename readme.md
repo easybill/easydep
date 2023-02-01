@@ -1,3 +1,8 @@
+# Easydep
+
+Easydep is a small, simple tool to automatically pull a release from GitHub (using a GitHub app), run a script inside
+the cloned repository, and symlink to the prepared directory to make it available as the latest release.
+
 ### Java Installation (Azul Zulu)
 
 ```shell
@@ -125,9 +130,10 @@ before the new process starts.
 Each executed step can register a cancel listener which gets executed when the current deployment process gets
 cancelled. The cancel listeners are called in LIFO order to ensure that the task order is reversed correctly. The tasks
 that are executed during a deployment are registered in a tree structure in order to keep the structure ordered and
-simple. 
+simple.
 
 This diagram shows the full execute chain:
+
 ```mermaid
 flowchart TB
   subgraph Release Processing
