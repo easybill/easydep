@@ -80,6 +80,20 @@ sudo systemctl start easydep.service
 sudo systemctl enable easydep.service
 ```
 
+### Preparing the target repository
+
+The repository that should be pulled and deployed by this tool needs to be "prepared" as well. The target repository
+must contain a bash script that is located at `.deploy/execute.sh`. That script will be executed when a release was
+made, and is responsible to prepare the cloned repository before it gets linked as the latest release.
+
+Some pitfalls that might happen:
+
+1. Git commands are no longer available. Before the script gets executed, the `.git` folder gets removed from the
+   repository, making it impossible to still use git commands.
+2. The script is executed from the root directory of the repository, not from the `.deploy` folder. This means that all
+   executed commands are running in the root directory, not from the `.deploy` directory.
+3. Additional symlinks (such as log files) are created after the script was executed, and are therefore not present.
+
 ### Release Configuration
 
 To set labels for a release to (for example) only get deployed to a few specific servers, the body of the release can
@@ -96,3 +110,46 @@ or `live2`). If no label value is set for one of the labels, the deployment will
 required. To make a label not required the name of the label needs to be suffixed with `?`. However, the name of the
 label will be without the question mark (for example the supplied key is `stage?`, the label name is `stage`). If a
 non-required label is given, but a mismatched local value was found, the release gets ignored anyway.
+
+### How does it work?
+
+In general this tool uses 2 threads:
+
+1. A poll thread that checks in a preconfigured interval if there are any new releases.
+2. A deployment execute thread that runs the current deployment process.
+
+The deployment handler (that executes the deployments) holds the current deployment process (if any), and if a new
+release is published while a deployment is running, will make sure that the current deployment process gets cancelled
+before the new process starts.
+
+Each executed step can register a cancel listener which gets executed when the current deployment process gets
+cancelled. The cancel listeners are called in LIFO order to ensure that the task order is reversed correctly. The tasks
+that are executed during a deployment are registered in a tree structure in order to keep the structure ordered and
+simple. 
+
+This diagram shows the full execute chain:
+```mermaid
+flowchart TB
+  subgraph Release Processing
+  P1["GitHub Release Poll"]-->P2["Release ID compare"]
+  P3["Cancel current deployment (if any)"]
+  P4["Set current executed deployment"]
+  
+  P2-- Same ID -->P5["Ignore"]
+  P2-- Higher ID -->P3-->P4
+  P2-- Lower ID -->P3-->P4-->P6["Check if old release is still locally present"]
+  end
+
+  P4-->T1
+  P6-- Yes -->T6
+  P6-- No -->T1
+
+  subgraph Task Tree
+  T1["Release Tag Check"]-->T2["Git Repo Init"]-->T3["Git Tag Checkout"]-->T4["Deployment Directory Git Cleanup"]-->T5["Deploy Script Execute"]-->T6["Deployment Dir Symlink"]-->T7["Old Deployment Cleanup"]    
+  end
+ 
+  subgraph Cancel Listeners
+  T2-.->C1["Repo Directory Delete"]
+  T5-.->C2["Deploy Script Process Kill"]
+  end
+```
