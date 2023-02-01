@@ -1,13 +1,11 @@
 package io.easybill.easydeploy.github;
 
-import io.easybill.easydeploy.util.ASN1SequenceUtil;
+import io.easybill.easydeploy.util.PKCS1PEMKey;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.io.IOException;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
-import java.security.spec.RSAPrivateKeySpec;
 import java.util.Objects;
-import org.bouncycastle.asn1.pkcs.RSAPrivateKey;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHubBuilder;
@@ -54,13 +52,10 @@ public final class GitHubAccessProvider {
   }
 
   private static @NotNull PrivateKey createJwtSignKey(@NotNull String keyData) throws Exception {
-    // parse the key in PKCS#1 format (which is the format that GitHub exports)
-    // we could convert to PKCS#8 here, which java understands natively, but this solution
-    // is much easier than adding the PKCS#8 headers manually
-    var asn1Sequence = ASN1SequenceUtil.fromInputOrFile(keyData);
-    var asn1Key = RSAPrivateKey.getInstance(asn1Sequence);
-    var keySpec = new RSAPrivateKeySpec(asn1Key.getModulus(), asn1Key.getPrivateExponent());
+    // load the key spec from the given key data
+    var keySpec = PKCS1PEMKey.fromInputOrFile(keyData);
 
+    // load the key and generate the private version of it
     var keyFactory = KeyFactory.getInstance("RSA");
     return keyFactory.generatePrivate(keySpec);
   }

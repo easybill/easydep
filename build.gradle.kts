@@ -25,7 +25,6 @@ dependencies {
   implementation(libs.dotenv)
   implementation(libs.jjwt.api)
   implementation(libs.jacksonToml)
-  implementation(libs.bcprovJdk15)
   implementation(libs.githubClient)
 
   // runtime only libs
