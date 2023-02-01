@@ -41,7 +41,7 @@ public final class DeployScriptExecuteTask extends ChainedTask<Pair<GHRelease, P
 
     // convert the process to a handle and register a cancel hook for the process
     var processHandle = process.toHandle();
-    context.registerCancellationTask(() -> processHandle.destroyForcibly());
+    context.registerCancellationTask(processHandle::destroyForcibly);
 
     // let the context wait for the process output and continue from there
     context.waitForFutureCompletion(processHandle.onExit(), future -> future
