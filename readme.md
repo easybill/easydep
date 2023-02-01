@@ -67,10 +67,14 @@ Wants=network-online.target
 [Service]
 Type=simple
 
+User=www-data
+Group=www-data
+
 Restart=always
 RestartSec=10
 
-WorkingDirectory=/home/deploy
+EnvironmentFile=/etc/default/easydep
+WorkingDirectory=/usr/lib/easydep
 ExecStart=/bin/java -Xms256M -Xmx256M -XX:+UseZGC -XX:+PerfDisableSharedMem -XX:+DisableExplicitGC -jar easydep.jar
 
 [Install]
