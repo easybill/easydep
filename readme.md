@@ -38,7 +38,8 @@ sudo apt install zulu17-jre-headless
 * `EASYDEP_DEPLOY_LINK_DIRECTORY`: The directory name of the symlink which should be created for the latest pulled
   release. This variable defaults to `current`.
 * `EASYDEP_DEPLOY_LABELS`: The labels of the current server the tool runs on. The labels must be given in the
-  format: `<key>:<value>`. A key must match the pattern `[a-zA-Z0-9_-. ]+`. Multiple labels can be delimited using `;;`.
+  format: `<key>:<value>`. A key must match the pattern `[a-zA-Z0-9_/-. ]+`. Multiple labels can be delimited
+  using `;;`.
   Example: `label_key1:value1;;label_key2:value2`. By default, no labels are configured.
 * `EASYDEP_DEPLOY_ADDITIONAL_SYMLINKS`: Additional symlinks that should be created linking from the deployment directory
   to a resolved, external path. The structure of the input is the same as for labels. The key represents the directory
