@@ -18,7 +18,7 @@ public final class DeployScriptExecuteTask extends ChainedTask<Pair<GHRelease, P
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DeployScriptExecuteTask.class);
 
-  private static final String DEPLOY_SCRIPT_PATH = ".deploy/execute.sh";
+  private static final String DEPLOY_SCRIPT_PATH = ".easydep/execute.sh";
 
   public DeployScriptExecuteTask() {
     super("Deployment Script Execute");

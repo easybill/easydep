@@ -94,7 +94,7 @@ sudo systemctl enable easydep.service
 ### Preparing the target repository
 
 The repository that should be pulled and deployed by this tool needs to be "prepared" as well. The target repository
-must contain a bash script that is located at `.deploy/execute.sh`. That script will be executed when a release was
+must contain a bash script that is located at `.easydep/execute.sh`. That script will be executed when a release was
 made, and is responsible to prepare the cloned repository before it gets linked as the latest release.
 
 Some pitfalls that might happen:
