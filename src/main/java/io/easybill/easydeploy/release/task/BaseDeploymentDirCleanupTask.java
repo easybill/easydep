@@ -46,7 +46,7 @@ public final class BaseDeploymentDirCleanupTask extends ChainedTask<GHRelease> {
   ) throws Exception {
     // check if we should delete any releases
     if (this.maxStoredReleases != -1) {
-      try (var stream = Files.walk(this.directoryHandler.deploymentBaseDirectory(), 0)) {
+      try (var stream = Files.walk(this.directoryHandler.deploymentsBaseDirectory(), 0)) {
         var directoriesToRemove = stream
           .filter(path -> !Files.isSymbolicLink(path) && Files.isDirectory(path))
           .map(path -> {
