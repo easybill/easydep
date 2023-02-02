@@ -1,7 +1,7 @@
 package io.easybill.easydeploy.release.task;
 
-import com.google.inject.Inject;
-import io.easybill.easydeploy.release.ReleaseDirectoryHandler;
+import dev.derklaro.aerogel.Inject;
+import io.easybill.easydeploy.release.handler.ReleaseDirectoryHandler;
 import io.easybill.easydeploy.task.ChainedTask;
 import io.easybill.easydeploy.task.TaskExecutionContext;
 import io.easybill.easydeploy.util.SymlinkUtil;

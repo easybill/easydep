@@ -5,8 +5,8 @@ shadow = "7.1.2"
 
 # libs
 jjwt = "0.11.5"
-guice = "5.1.0"
 dotenv = "2.3.1"
+aerogel = "2.0.0"
 jackson = "2.14.1"
 annotations = "24.0.0"
 githubClient = "1.313"
@@ -22,7 +22,6 @@ junit = "5.9.2"
 [libraries]
 
 # libs
-guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }
 jgit = { group = "org.eclipse.jgit", name = "org.eclipse.jgit", version.ref = "jgit" }
 dotenv = { group = "io.github.cdimascio", name = "dotenv-java", version.ref = "dotenv" }
 githubClient = { group = "org.kohsuke", name = "github-api", version.ref = "githubClient" }
@@ -32,6 +31,9 @@ jacksonToml = { group = "com.fasterxml.jackson.dataformat", name = "jackson-data
 jjwt-api = { group = "io.jsonwebtoken", name = "jjwt-api", version.ref = "jjwt" }
 jjwt-impl = { group = "io.jsonwebtoken", name = "jjwt-impl", version.ref = "jjwt" }
 jjwt-jackson = { group = "io.jsonwebtoken", name = "jjwt-jackson", version.ref = "jjwt" }
+
+aerogel-core = { group = "dev.derklaro.aerogel", name = "aerogel", version.ref = "aerogel" }
+aerogel-auto = { group = "dev.derklaro.aerogel", name = "aerogel-auto", version.ref = "aerogel" }
 
 slf4j = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 logback = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }

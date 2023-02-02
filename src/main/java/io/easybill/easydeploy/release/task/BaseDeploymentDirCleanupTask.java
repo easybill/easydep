@@ -1,8 +1,7 @@
 package io.easybill.easydeploy.release.task;
 
-import com.google.common.primitives.Longs;
-import com.google.inject.Inject;
-import io.easybill.easydeploy.release.ReleaseDirectoryHandler;
+import dev.derklaro.aerogel.Inject;
+import io.easybill.easydeploy.release.handler.ReleaseDirectoryHandler;
 import io.easybill.easydeploy.task.ChainedTask;
 import io.easybill.easydeploy.task.TaskExecutionContext;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -10,15 +9,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.io.file.StandardDeleteOption;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.github.GHRelease;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class BaseDeploymentDirCleanupTask extends ChainedTask<GHRelease> {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(BaseDeploymentDirCleanupTask.class);
   private static final Comparator<Pair<Path, Long>> DIR_ID_COMPARATOR = Comparator.comparing(
     Pair::getRight,
     Collections.reverseOrder());
@@ -47,13 +50,17 @@ public final class BaseDeploymentDirCleanupTask extends ChainedTask<GHRelease> {
         var directoriesToRemove = stream
           .filter(path -> !Files.isSymbolicLink(path) && Files.isDirectory(path))
           .map(path -> {
-            // parsing the file name to a long here makes it easier
-            //  - to compare the directories
-            //  - to ensure that the directory really is a deployed directory and not something we shouldn't delete
-            var parsedId = Longs.tryParse(path.getFileName().toString());
-            return Pair.of(path, parsedId);
+            try {
+              // parsing the file name to a long here makes it easier
+              //  - to compare the directories
+              //  - to ensure that the directory really is a deployed directory and not something we shouldn't delete
+              var parsedId = Long.parseLong(path.getFileName().toString());
+              return Pair.of(path, parsedId);
+            } catch (NumberFormatException exception) {
+              return null;
+            }
           })
-          .filter(pair -> pair.getRight() != null)
+          .filter(Objects::nonNull)
           .sorted(DIR_ID_COMPARATOR) // sort by the name of the directory (which is the release id)
           .skip(this.maxStoredReleases) // skip the newest releases
           .map(Pair::getLeft)
@@ -65,6 +72,9 @@ public final class BaseDeploymentDirCleanupTask extends ChainedTask<GHRelease> {
             PathUtils.deleteDirectory(dir, StandardDeleteOption.OVERRIDE_READ_ONLY);
           }
         }
+      } catch (Exception exception) {
+        // catch the exception here, and do not propagate it to the handling context
+        LOGGER.error("Unable to execute deployment directory cleanup", exception);
       }
     }
 

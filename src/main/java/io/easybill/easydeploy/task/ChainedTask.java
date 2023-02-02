@@ -19,6 +19,10 @@ public abstract class ChainedTask<I> {
     @NotNull I input
   ) throws Exception;
 
+  public @NotNull String displayName() {
+    return this.displayName;
+  }
+
   public @NotNull <V> TaskExecutionContext<I, V> enterContext() {
     return new TaskExecutionContext<>(this);
   }

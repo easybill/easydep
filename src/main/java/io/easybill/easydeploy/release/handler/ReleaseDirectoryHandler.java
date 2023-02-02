@@ -1,7 +1,7 @@
-package io.easybill.easydeploy.release;
+package io.easybill.easydeploy.release.handler;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import dev.derklaro.aerogel.Inject;
+import dev.derklaro.aerogel.Singleton;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.nio.file.Path;
 import java.util.Objects;

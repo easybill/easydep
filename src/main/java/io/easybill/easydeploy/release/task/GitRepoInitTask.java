@@ -1,10 +1,12 @@
 package io.easybill.easydeploy.release.task;
 
-import com.google.inject.Inject;
+import dev.derklaro.aerogel.Inject;
 import io.easybill.easydeploy.github.GitHubAccessProvider;
-import io.easybill.easydeploy.release.ReleaseDirectoryHandler;
+import io.easybill.easydeploy.release.handler.ReleaseDirectoryHandler;
 import io.easybill.easydeploy.task.ChainedTask;
 import io.easybill.easydeploy.task.TaskExecutionContext;
+import io.easybill.easydeploy.task.TaskTreeLifecycle;
+import io.easybill.easydeploy.task.event.TaskTreeLifecycleEvent;
 import java.nio.file.Files;
 import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.io.file.StandardDeleteOption;
@@ -71,9 +73,12 @@ public final class GitRepoInitTask extends ChainedTask<GHRelease> {
     var deploymentDir = this.directoryHandler.resolveDeploymentDirectory(input);
     PathUtils.copyDirectory(baseRepoDir, deploymentDir);
 
-    // register a cancel listener which removes the created deployment directory
-    context.registerCancellationTask(
-      () -> PathUtils.deleteDirectory(deploymentDir, StandardDeleteOption.OVERRIDE_READ_ONLY));
+    // register a listener which removes the created deployment directory when the task chain execute fails
+    context.eventPipeline().registerConsumer(TaskTreeLifecycleEvent.class, lifecycleEvent -> {
+      if (lifecycleEvent.lifecycle() == TaskTreeLifecycle.CHAIN_FAILURE) {
+        PathUtils.deleteDirectory(deploymentDir, StandardDeleteOption.OVERRIDE_READ_ONLY);
+      }
+    });
 
     // construct the result
     return Pair.of(input, deploymentDir);

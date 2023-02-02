@@ -1,5 +1,7 @@
 package io.easybill.easydeploy.github;
 
+import dev.derklaro.aerogel.Singleton;
+import dev.derklaro.aerogel.auto.Factory;
 import io.easybill.easydeploy.util.PKCS1PEMKey;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.io.IOException;
@@ -13,6 +15,7 @@ import org.kohsuke.github.authorization.AuthorizationProvider;
 import org.kohsuke.github.authorization.OrgAppInstallationAuthorizationProvider;
 import org.kohsuke.github.extras.authorization.JWTTokenProvider;
 
+@Singleton
 public final class GitHubAccessProvider {
 
   private static final String AUTH_TOKEN_PREFIX = "token ";
@@ -25,6 +28,7 @@ public final class GitHubAccessProvider {
     this.appAuthProvider = appAuthProvider;
   }
 
+  @Factory
   public static @NotNull GitHubAccessProvider createFromEnv(@NotNull Dotenv env) {
     try {
       // read the app configuration environment variables

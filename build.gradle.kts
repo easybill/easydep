@@ -20,17 +20,21 @@ dependencies {
 
   // visible libs
   implementation(libs.jgit)
-  implementation(libs.guice)
   implementation(libs.slf4j)
   implementation(libs.dotenv)
   implementation(libs.jjwt.api)
   implementation(libs.jacksonToml)
   implementation(libs.githubClient)
+  implementation(libs.aerogel.core)
+  implementation(libs.aerogel.auto)
 
   // runtime only libs
   runtimeOnly(libs.logback)
   runtimeOnly(libs.jjwt.impl)
   runtimeOnly(libs.jjwt.jackson)
+
+  // annotation processing
+  annotationProcessor(libs.aerogel.auto)
 
   // testing libs
   testImplementation(libs.junit.api)

@@ -1,7 +1,9 @@
 package io.easybill.easydeploy.task;
 
-import java.util.Deque;
-import java.util.LinkedList;
+import io.easybill.easydeploy.event.EventPipeline;
+import io.easybill.easydeploy.task.event.TaskTreeLifecycleEvent;
+import io.easybill.easydeploy.task.event.TaskTreeTaskFailureEvent;
+import io.easybill.easydeploy.task.event.TaskTreeTaskFinishedEvent;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -30,8 +32,8 @@ public final class TaskExecutionContext<I, O> {
   // the current state of this context
   private final AtomicInteger state = new AtomicInteger(STATE_READY);
 
-  // the tasks to execute when this context execution gets cancelled
-  private final Deque<ThrowingRunnable> cancellationTasks = new LinkedList<>();
+  // the event pipeline for this context
+  private final EventPipeline eventPipeline = new EventPipeline();
 
   // our future that will be completed with the result of the task execution
   private final CompletableFuture<O> ourFuture = new CompletableFuture<>();
@@ -45,14 +47,8 @@ public final class TaskExecutionContext<I, O> {
     this.currentTask = (ChainedTask<Object>) currentTask;
   }
 
-  public void registerCancellationTask(@NotNull ThrowingRunnable task) {
-    if (this.inState(STATE_CANCELLED)) {
-      // execute directly in case this was cancelled
-      this.executeCancellationTask(task);
-    } else {
-      // register the task in case the process is cancelled later
-      this.cancellationTasks.add(task);
-    }
+  public @NotNull EventPipeline eventPipeline() {
+    return this.eventPipeline;
   }
 
   public @NotNull CompletableFuture<O> scheduleExecution(@NotNull I input) {
@@ -93,6 +89,7 @@ public final class TaskExecutionContext<I, O> {
         .thenAcceptAsync(result -> this.resumeExecutionAt(nextTask, result), TASK_EXECUTOR)
         .exceptionally(throwable -> {
           this.postCompleteExceptionally(throwable);
+          this.eventPipeline.post(new TaskTreeTaskFailureEvent(this.currentTask, throwable));
           return null;
         });
 
@@ -157,9 +154,11 @@ public final class TaskExecutionContext<I, O> {
 
       // if the next task is null we reached the tail of the command chain
       if (nextTask == null) {
-        // mark this context as done and remove all cancel listeners to release them for GC
+        // mark this context as done
         this.state.set(STATE_DONE);
-        this.cancellationTasks.clear();
+
+        // notify the event pipeline that this context finished
+        this.eventPipeline.post(new TaskTreeLifecycleEvent(currentTask, TaskTreeLifecycle.CHAIN_FINISH));
 
         // complete the waiting future with the previous task output, we expect the output
         // to always match the expected result type and can therefore do an unsafe cast here
@@ -167,6 +166,9 @@ public final class TaskExecutionContext<I, O> {
         this.ourFuture.complete((O) previousTaskOutput);
         return;
       }
+
+      // notify the event pipeline that the previous task executed successfully
+      this.eventPipeline.post(new TaskTreeTaskFinishedEvent(currentTask, previousTaskOutput));
 
       // set the current task we're executing
       this.currentTask = nextTask;
@@ -185,6 +187,7 @@ public final class TaskExecutionContext<I, O> {
         this.resumeExecutionAt(nextTask.next, taskResult);
       } catch (Exception exception) {
         this.postCompleteExceptionally(exception);
+        this.eventPipeline.post(new TaskTreeTaskFailureEvent(nextTask, exception));
       }
     }
   }
@@ -194,8 +197,8 @@ public final class TaskExecutionContext<I, O> {
   }
 
   private void postCompleteExceptionally(@NotNull Throwable exception) {
-    // execute the cancellation listeners
-    this.executeCancellationListeners();
+    // notify the event pipeline that this chain failed
+    this.eventPipeline.post(new TaskTreeLifecycleEvent(this.currentTask, TaskTreeLifecycle.CHAIN_FAILURE));
 
     // complete our future with the given exception
     this.ourFuture.completeExceptionally(exception);
@@ -207,26 +210,5 @@ public final class TaskExecutionContext<I, O> {
 
     // for debugging reasons just print out the full exception again
     LOGGER.warn("Execution of task {} failed:", this.currentTask.displayName, exception);
-  }
-
-  private void executeCancellationListeners() {
-    var cancellationTasks = this.cancellationTasks;
-    if (!cancellationTasks.isEmpty()) {
-      // reverse the iteration over the list so that the cancellation listener that was added
-      // in the last step will be called first. This prevents the possibility that using the output
-      // of a previous task might result in an issue
-      ThrowingRunnable cancellationTask;
-      while ((cancellationTask = cancellationTasks.pollLast()) != null) {
-        this.executeCancellationTask(cancellationTask);
-      }
-    }
-  }
-
-  private void executeCancellationTask(@NotNull ThrowingRunnable task) {
-    try {
-      task.run();
-    } catch (Exception exception) {
-      LOGGER.warn("Cancellation task {} throw uncaught exception while executing", task.getClass(), exception);
-    }
   }
 }

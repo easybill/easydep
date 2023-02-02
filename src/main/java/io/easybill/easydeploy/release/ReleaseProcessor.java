@@ -1,7 +1,10 @@
 package io.easybill.easydeploy.release;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import dev.derklaro.aerogel.Inject;
+import dev.derklaro.aerogel.Name;
+import dev.derklaro.aerogel.Singleton;
+import io.easybill.easydeploy.release.handler.ReleaseDirectoryHandler;
+import io.easybill.easydeploy.release.task.DeploymentSymlinkTask;
 import io.easybill.easydeploy.task.ChainedTask;
 import io.easybill.easydeploy.task.TaskExecutionContext;
 import java.io.IOException;
@@ -33,14 +36,15 @@ public final class ReleaseProcessor {
 
   @Inject
   public ReleaseProcessor(
-    @NotNull ReleaseTaskProvider releaseTaskProvider,
-    @NotNull ReleaseDirectoryHandler directoryHandler
+    @NotNull ReleaseDirectoryHandler directoryHandler,
+    @NotNull DeploymentSymlinkTask deployRollbackTaskChain,
+    @NotNull @Name("deploy") ChainedTask<GHRelease> deployTaskChain
   ) {
     this.releaseDirectoryHandler = directoryHandler;
 
-    // build the task chains to execute deployments
-    this.deployTaskChain = releaseTaskProvider.buildDeployTaskChain();
-    this.deployRollbackTaskChain = releaseTaskProvider.buildDirectorySymlinkTaskChain();
+    // set the task injected task chains
+    this.deployTaskChain = deployTaskChain;
+    this.deployRollbackTaskChain = deployRollbackTaskChain;
 
     // resolve the last executed deployment by trying to follow the symlink of the current
     // deployment directory. The associated deployment directory name is the last release we processed.

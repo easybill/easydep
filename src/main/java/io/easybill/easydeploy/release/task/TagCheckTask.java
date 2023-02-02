@@ -2,7 +2,7 @@ package io.easybill.easydeploy.release.task;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.toml.TomlMapper;
-import com.google.inject.Inject;
+import dev.derklaro.aerogel.Inject;
 import io.easybill.easydeploy.task.ChainedTask;
 import io.easybill.easydeploy.task.TaskExecutionContext;
 import io.easybill.easydeploy.util.TokenizedInputParser;

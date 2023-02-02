@@ -1,7 +1,7 @@
 package io.easybill.easydeploy.github;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import dev.derklaro.aerogel.Inject;
+import dev.derklaro.aerogel.Singleton;
 import io.easybill.easydeploy.release.ReleaseProcessor;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.io.IOException;
