@@ -65,16 +65,23 @@ public final class ReleaseProcessor {
     try {
       if (release.getId() > this.lastExecutedRelease) {
         // new release we should process
+        LOGGER.info("Resolved new release {} from GitHub, starting deployment", release.getId());
+
         this.lastExecutedRelease = release.getId();
         this.cancelRunningRelease();
         this.processNewRelease(release);
-      }
-
-      if (this.lastExecutedRelease > release.getId()) {
+      } else if (this.lastExecutedRelease > release.getId()) {
         // rollback to an old release
+        LOGGER.info("Detected deletion of release {}, trying to roll back to release {}",
+          this.lastExecutedRelease,
+          release.getId());
+
         this.lastExecutedRelease = release.getId();
         this.cancelRunningRelease();
         this.rollbackToOldRelease(release);
+      } else {
+        // current release, nothing to do
+        LOGGER.debug("Ignoring release {} because it was already deployed", release.getId());
       }
     } finally {
       this.deploymentLock.unlock();
