@@ -12,7 +12,7 @@
     <syslogHost>localhost</syslogHost>
     <port>514</port>
     <facility>LOCAL0</facility>
-    <suffixPattern>[%thread] %-5level %logger{36}: %msg</suffixPattern>
+    <suffixPattern>[easydep %-5level] %logger{36}: %msg</suffixPattern>
   </appender>
 
   <root level="debug">
