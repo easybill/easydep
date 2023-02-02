@@ -38,11 +38,10 @@ public final class ScriptExecutionHandler {
     }
 
     // create a temporary file that catches the log output of the script process
-    var logFilePath = Path.of(".scriptlog", "%s.tmp".formatted(RANDOM.nextLong()));
+    var logFilePath = directory.resolve(".scriptlog").resolve("%s.tmp".formatted(RANDOM.nextLong()));
     this.createLogFile(logFilePath);
 
     // start the script process
-
     var process = new ProcessBuilder("bash", scriptPathName)
       .directory(directory.toFile())
       .redirectErrorStream(true)
