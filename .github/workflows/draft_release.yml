@@ -1,0 +1,51 @@
+name: "Draft new release"
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Draft new release
+
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+          check-latest: true
+          cache: 'gradle'
+
+      - name: Compile
+        run: ./gradlew build --no-daemon --stacktrace
+
+      - name: Resolve latest short commit SHA
+        run: echo "SHORT_COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV;
+
+      - name: Generate changelog
+        id: changelog_generate
+        uses: mikepenz/release-changelog-builder-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commitMode: true
+          ignorePreReleases: true
+          configurationJson: '{"tag_resolver":{"method":"sort"}}'
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: false
+          tag_name: ${{ env.SHORT_COMMIT_SHA }}
+          body: ${{steps.changelog_generate.outputs.changelog}}
+          fail_on_unmatched_files: true
+          files: |
+            build/libs/easydep.jar
