@@ -8,6 +8,7 @@ import io.easybill.easydeploy.task.TaskExecutionContext;
 import io.easybill.easydeploy.util.TokenizedInputParser;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.util.Map;
+import java.util.regex.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.github.GHRelease;
@@ -20,11 +21,16 @@ public final class TagCheckTask extends ChainedTask<GHRelease> {
   private static final Logger LOGGER = LoggerFactory.getLogger(TagCheckTask.class);
 
   private final Map<String, String> ourLabels;
+  private final Pattern releaseBodyParsePattern;
 
   @Inject
   public TagCheckTask(@NotNull Dotenv env) {
     super("TagCheck");
     this.ourLabels = TokenizedInputParser.tokenizeInput(env.get("EASYDEP_DEPLOY_LABELS", ""));
+
+    // read the configured release body pattern
+    var releaseBodyPattern = env.get("EASYDEP_RELEASE_BODY_PARSE_PATTERN", "(.*)");
+    this.releaseBodyParsePattern = Pattern.compile(releaseBodyPattern, Pattern.DOTALL);
   }
 
   @Override
@@ -35,8 +41,17 @@ public final class TagCheckTask extends ChainedTask<GHRelease> {
     // check the body of the release for further input in form of a toml config
     var body = input.getBody();
     if (!body.isBlank()) {
+      var bodyMatcher = this.releaseBodyParsePattern.matcher(body);
+      if (!bodyMatcher.matches()) {
+        LOGGER.warn("Body matcher did not match the supplied release body");
+
+        // cancel the execution
+        context.cancel();
+        return null;
+      }
+
       // parse the body
-      var parsedBody = TOML_MAPPER.readTree(body);
+      var parsedBody = TOML_MAPPER.readTree(bodyMatcher.group(1));
 
       // check if there were any labels submitted
       var labels = parsedBody.get("labels");

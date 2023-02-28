@@ -41,6 +41,10 @@ sudo apt install zulu17-jre-headless
   format: `<key>:<value>`. A key must match the pattern `[a-zA-Z0-9_/-. ]+`. Multiple labels can be delimited
   using `;;`.
   Example: `label_key1:value1;;label_key2:value2`. By default, no labels are configured.
+* `EASYDEP_RELEASE_BODY_PARSE_PATTERN`: A pattern that matches the generated body of a release pulled from GitHub. The
+  first group of the pattern must represent the TOML to be read by the label parser. All other groups are ignored. If
+  the pattern does not match, the release workflow is aborted. Note that the pattern is parsed in single line mode. By
+  default, the pattern `(.*)` is used.
 * `EASYDEP_DEPLOY_ADDITIONAL_SYMLINKS`: Additional symlinks that should be created linking from the deployment directory
   to a resolved, external path. The structure of the input is the same as for labels. The key represents the directory
   which should be virtually created and linked to the given resolved target directory (the value). By default, no
