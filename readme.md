@@ -8,7 +8,8 @@ the cloned repository, and symlink to the prepared directory to make it availabl
 ```shell
 curl -s https://repos.azul.com/azul-repo.key | sudo gpg --dearmor -o /usr/share/keyrings/azul.gpg
 echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | sudo tee /etc/apt/sources.list.d/zulu.list
-sudo apt install zulu17-jre-headless
+sudo apt update
+sudo apt install -y zulu17-jre-headless
 ```
 
 ### Env Configuration
@@ -55,6 +56,8 @@ sudo apt install zulu17-jre-headless
 ### Systemd
 
 ```shell
+sudo mkdir -p /usr/lib/easydep
+sudo touch /etc/default/easydep
 sudo nano /etc/systemd/system/easydep.service
 ```
 
