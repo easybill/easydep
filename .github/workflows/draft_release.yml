@@ -26,8 +26,8 @@ jobs:
       - name: Compile
         run: ./gradlew build --no-daemon --stacktrace
 
-      - name: Resolve latest short commit SHA
-        run: echo "SHORT_COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV;
+      - name: Resolve project version
+        run: echo "VERSION=$(./gradlew properties | awk '/^version:/ { print $2; }')+b${{ github.run_number }}" >> $GITHUB_ENV;
 
       - name: Generate changelog
         id: changelog_generate
@@ -35,16 +35,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          commitMode: true
           ignorePreReleases: true
-          configurationJson: '{"tag_resolver":{"method":"sort"}}'
+          toTag: ${{ github.sha }}
+          configurationJson: '{"max_tags_to_fetch":5,"categories":[],"template":"#{{UNCATEGORIZED}}","pr_template":"- #{{TITLE}} (##{{NUMBER}} by #{{AUTHOR}})"}'
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           draft: false
           prerelease: false
-          tag_name: ${{ env.SHORT_COMMIT_SHA }}
+          tag_name: ${{ env.VERSION }}
           body: ${{steps.changelog_generate.outputs.changelog}}
           fail_on_unmatched_files: true
           files: |
