@@ -1,0 +1,20 @@
+[Unit]
+Description=Easydep
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+User=www-data
+Group=www-data
+
+Restart=always
+RestartSec=10
+
+WorkingDirectory=/usr/lib/easydep
+EnvironmentFile=/etc/default/easydep
+ExecStart=/bin/java -Xms256M -Xmx256M -XX:+UseZGC -XX:+PerfDisableSharedMem -XX:+DisableExplicitGC -jar easydep.jar
+
+[Install]
+WantedBy=multi-user.target
