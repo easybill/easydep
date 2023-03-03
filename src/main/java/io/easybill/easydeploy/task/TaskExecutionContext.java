@@ -4,6 +4,8 @@ import io.easybill.easydeploy.event.EventPipeline;
 import io.easybill.easydeploy.task.event.TaskTreeLifecycleEvent;
 import io.easybill.easydeploy.task.event.TaskTreeTaskFailureEvent;
 import io.easybill.easydeploy.task.event.TaskTreeTaskFinishedEvent;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -37,6 +39,9 @@ public final class TaskExecutionContext<I, O> {
 
   // our future that will be completed with the result of the task execution
   private final CompletableFuture<O> ourFuture = new CompletableFuture<>();
+
+  // additional step information that can be optionally passed in by the task
+  private final Map<String, String> additionalTaskInformation = new HashMap<>(16);
 
   // the current execution state
   private ChainedTask<Object> currentTask;
@@ -119,6 +124,14 @@ public final class TaskExecutionContext<I, O> {
     }
   }
 
+  public void registerAdditionalInformation(@NotNull String key, @Nullable String value) {
+    this.additionalTaskInformation.put(key, value);
+  }
+
+  public @NotNull Map<String, String> additionalTaskInformation() {
+    return this.additionalTaskInformation;
+  }
+
   private boolean inState(int expectedState) {
     return this.state.get() == expectedState;
   }
@@ -167,8 +180,9 @@ public final class TaskExecutionContext<I, O> {
         return;
       }
 
-      // notify the event pipeline that the previous task executed successfully
+      // notify the event pipeline that the previous task executed successfully & remove added task information
       this.eventPipeline.post(new TaskTreeTaskFinishedEvent(currentTask, previousTaskOutput));
+      this.additionalTaskInformation.clear();
 
       // set the current task we're executing
       this.currentTask = nextTask;

@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +20,8 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public final class ScriptExecutionHandler {
 
+  public static final String LOG_DIR_NAME = ".scriptlog";
+
   private static final Logger LOGGER = LoggerFactory.getLogger(ScriptExecutionHandler.class);
 
   private static final Random RANDOM = new Random();
@@ -27,6 +31,7 @@ public final class ScriptExecutionHandler {
     @NotNull Path directory,
     @NotNull String scriptName,
     @NotNull String scriptLogId,
+    @NotNull Map<String, String> env,
     @Nullable TaskExecutionContext<?, ?> context,
     @Nullable Object successfulScriptReturnValue
   ) throws IOException {
@@ -38,15 +43,20 @@ public final class ScriptExecutionHandler {
     }
 
     // create a temporary file that catches the log output of the script process
-    var logFilePath = directory.resolve(".scriptlog").resolve("%s.tmp".formatted(RANDOM.nextLong()));
+    var logFilePath = directory.resolve(LOG_DIR_NAME).resolve("%s.tmp".formatted(RANDOM.nextLong()));
     this.createLogFile(logFilePath);
 
-    // start the script process
-    var process = new ProcessBuilder("bash", scriptPathName)
+    // build the process
+    var processBuilder = new ProcessBuilder("bash", scriptPathName)
       .directory(directory.toFile())
       .redirectErrorStream(true)
-      .redirectOutput(logFilePath.toFile())
-      .start();
+      .redirectOutput(logFilePath.toFile());
+    for (var envVarEntry : env.entrySet()) {
+      processBuilder.environment().put(envVarEntry.getKey().toUpperCase(Locale.ROOT), envVarEntry.getValue());
+    }
+
+    // start the script process
+    var process = processBuilder.start();
 
     // if a context is given, ensure that we destroy the process in case the execution fails
     var processHandle = process.toHandle();
@@ -56,6 +66,11 @@ public final class ScriptExecutionHandler {
           processHandle.destroyForcibly();
         }
       });
+
+      // attach the log file information to the context
+      context.registerAdditionalInformation(
+        "easydep_%s_log".formatted(scriptName.replace('.', '_')),
+        logFilePath.toAbsolutePath().toString());
 
       // configure the future based on the context wait method
       context.waitForFutureCompletion(
@@ -80,11 +95,7 @@ public final class ScriptExecutionHandler {
           // print out the process log file lines to the target logger
           var logLines = Files.readAllLines(logPath, StandardCharsets.UTF_8);
           logLines.forEach(line -> LOGGER.info("[{}]: {}", scriptLogId, line));
-
-          // remove the log file
-          Files.deleteIfExists(logPath);
-        } catch (IOException exception) {
-          LOGGER.error("Unable to read log lines from file: {}", logPath.toAbsolutePath(), exception);
+        } catch (IOException ignored) {
         }
       })
       .thenApply(handle -> {

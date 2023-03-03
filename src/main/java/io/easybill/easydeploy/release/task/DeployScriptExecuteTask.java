@@ -5,6 +5,7 @@ import io.easybill.easydeploy.release.handler.ScriptExecutionHandler;
 import io.easybill.easydeploy.task.ChainedTask;
 import io.easybill.easydeploy.task.TaskExecutionContext;
 import java.nio.file.Path;
+import java.util.Map;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ public final class DeployScriptExecuteTask extends ChainedTask<Pair<GHRelease, P
       input.getRight(),
       DEPLOY_SCRIPT_NAME,
       DEPLOY_LOG_FORMAT.formatted(input.getLeft().getId()),
+      Map.of(),
       context,
       input);
 
