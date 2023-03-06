@@ -7,9 +7,7 @@ import io.easybill.easydeploy.task.TaskExecutionContext;
 import io.easybill.easydeploy.task.TaskTreeLifecycle;
 import io.easybill.easydeploy.task.event.TaskTreeLifecycleEvent;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.github.GHRelease;
@@ -43,12 +41,6 @@ public final class ChainEventScriptExecuteTask extends ChainedTask<Pair<GHReleas
       } else {
         // no need to append the task name, just use the lifecycle name
         this.runScript(context, input.getRight(), "%s".formatted(normalizedLifecycleName));
-
-        // as the tree finished & all scripts ran we can now remove the script log directory
-        var scriptLogDirectory = input.getRight().resolve(ScriptExecutionHandler.LOG_DIR_NAME);
-        if (Files.exists(scriptLogDirectory)) {
-          PathUtils.deleteDirectory(scriptLogDirectory);
-        }
       }
     }, /* very low priority to get called first */ 0);
 

@@ -20,11 +20,10 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public final class ScriptExecutionHandler {
 
-  public static final String LOG_DIR_NAME = ".scriptlog";
-
   private static final Logger LOGGER = LoggerFactory.getLogger(ScriptExecutionHandler.class);
 
   private static final Random RANDOM = new Random();
+  private static final String LOG_DIR_NAME = ".scriptlog";
   private static final String EASYDEP_DIRECTORY_FORMAT = ".easydep/%s";
 
   public void runScriptIfExists(
