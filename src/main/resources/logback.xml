@@ -6,6 +6,8 @@
     </encoder>
   </appender>
 
+  <logger name="org.eclipse.jgit" level="ERROR"/>
+
   <root level="debug">
     <appender-ref ref="STDOUT"/>
   </root>
