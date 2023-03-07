@@ -14,7 +14,7 @@ import org.kohsuke.github.GHRelease;
 public final class DeployScriptExecuteTask extends ChainedTask<Pair<GHRelease, Path>> {
 
   private static final String DEPLOY_SCRIPT_NAME = "execute.sh";
-  private static final String DEPLOY_LOG_FORMAT = "Deployment %s";
+  private static final String DEPLOY_LOG_FORMAT = "Deployment %s (%s)";
 
   private final ScriptExecutionHandler scriptExecutionHandler;
 
@@ -33,7 +33,7 @@ public final class DeployScriptExecuteTask extends ChainedTask<Pair<GHRelease, P
     this.scriptExecutionHandler.runScriptIfExists(
       input.getRight(),
       DEPLOY_SCRIPT_NAME,
-      DEPLOY_LOG_FORMAT.formatted(input.getLeft().getId()),
+      DEPLOY_LOG_FORMAT.formatted(input.getLeft().getName(), input.getLeft().getId()),
       Map.of(),
       context,
       input);

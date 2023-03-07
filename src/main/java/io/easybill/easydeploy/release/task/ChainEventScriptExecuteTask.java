@@ -37,10 +37,10 @@ public final class ChainEventScriptExecuteTask extends ChainedTask<Pair<GHReleas
       if (lifecycle == TaskTreeLifecycle.TASK_FAILURE || lifecycle == TaskTreeLifecycle.TASK_SUCCESS) {
         // include a normalized version of the task name (all lower case, spaces replaced with underscore)
         var normalizedTaskName = lifecycleEvent.lastTask().displayName().toLowerCase().replace(' ', '_');
-        this.runScript(context, input.getRight(), "%s.%s".formatted(normalizedLifecycleName, normalizedTaskName));
+        this.runScript(context, input, "%s.%s".formatted(normalizedLifecycleName, normalizedTaskName));
       } else {
         // no need to append the task name, just use the lifecycle name
-        this.runScript(context, input.getRight(), "%s".formatted(normalizedLifecycleName));
+        this.runScript(context, input, "%s".formatted(normalizedLifecycleName));
       }
     }, /* very low priority to get called first */ 0);
 
@@ -49,15 +49,15 @@ public final class ChainEventScriptExecuteTask extends ChainedTask<Pair<GHReleas
 
   private void runScript(
     @NotNull TaskExecutionContext<?, ?> context,
-    @NotNull Path directory,
+    @NotNull Pair<GHRelease, Path> input,
     @NotNull String scriptName
   ) throws IOException {
     // append the script suffix and pass on the execution to the handler
     var finalScriptName = "%s.sh".formatted(scriptName);
     this.scriptExecutionHandler.runScriptIfExists(
-      directory,
+      input.getRight(),
       finalScriptName,
-      "Lifecycle Event",
+      "Lifecycle Event of %s (%s)".formatted(input.getLeft().getName(), input.getLeft().getId()),
       context.additionalTaskInformation(),
       null,
       null);
