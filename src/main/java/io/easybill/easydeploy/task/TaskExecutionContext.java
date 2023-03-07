@@ -124,8 +124,8 @@ public final class TaskExecutionContext<I, O> {
     }
   }
 
-  public void registerAdditionalInformation(@NotNull String key, @Nullable String value) {
-    this.additionalTaskInformation.put(key, value);
+  public void registerAdditionalInformation(@NotNull String key, @Nullable Object value) {
+    this.additionalTaskInformation.put(key, String.valueOf(value));
   }
 
   public @NotNull Map<String, String> additionalTaskInformation() {
@@ -180,9 +180,8 @@ public final class TaskExecutionContext<I, O> {
         return;
       }
 
-      // notify the event pipeline that the previous task executed successfully & remove added task information
+      // notify the event pipeline that the previous task executed successfully
       this.eventPipeline.post(new TaskTreeTaskFinishedEvent(currentTask, previousTaskOutput));
-      this.additionalTaskInformation.clear();
 
       // set the current task we're executing
       this.currentTask = nextTask;

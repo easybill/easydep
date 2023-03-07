@@ -124,6 +124,12 @@ public final class ReleaseProcessor {
     TaskExecutionContext<I, O> taskContext = task.enterContext();
     this.lastScheduledRelease = Pair.of(release, taskContext);
 
+    // add some general information of the release to the context
+    taskContext.registerAdditionalInformation("EASYDEP_RELEASE_ID", release.getId());
+    taskContext.registerAdditionalInformation("EASYDEP_RELEASE_NAME", release.getName());
+    taskContext.registerAdditionalInformation("EASYDEP_RELEASE_TAG_NAME", release.getTagName());
+    taskContext.registerAdditionalInformation("EASYDEP_RELEASE_TARGET_COMMIT", release.getTargetCommitish());
+
     // execute the task
     return taskContext.scheduleExecution(input);
   }
