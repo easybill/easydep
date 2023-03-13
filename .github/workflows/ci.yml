@@ -22,15 +22,15 @@ jobs:
     name: Compile ${{ matrix.platform.target }} / ${{ matrix.platform.os }}
 
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         platform:
           # mac target
-          - { os: 'macos-latest', target: 'x86_64-apple-darwin', arch: 'x86_64', osn: 'mac', cross: false }
-          - { os: 'macos-latest', target: 'aarch64-apple-darwin', arch: 'aarch64', osn: 'mac', cross: true }
+          - { os: 'macos-latest', target: 'x86_64-apple-darwin', arch: 'x86_64', osn: 'mac' }
+          - { os: 'macos-latest', target: 'aarch64-apple-darwin', arch: 'aarch64', osn: 'mac' }
           # linux target
-          - { os: 'ubuntu-latest', target: 'x86_64-unknown-linux-musl', arch: 'x86_64', osn: 'linux', cross: false }
-          - { os: 'ubuntu-latest', target: 'aarch64-unknown-linux-musl', arch: 'aarch64', osn: 'linux', cross: true }
+          - { os: 'ubuntu-latest', target: 'x86_64-unknown-linux-musl', arch: 'x86_64', osn: 'linux' }
+          - { os: 'ubuntu-latest', target: 'aarch64-unknown-linux-musl', arch: 'aarch64', osn: 'linux' }
 
     steps:
       - name: Checkout repository
@@ -52,7 +52,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          use-cross: ${{ matrix.platform.cross }}
+          use-cross: true
           args: --release --target ${{ matrix.platform.target }} --bin easydep
 
       - name: Upload artifact
