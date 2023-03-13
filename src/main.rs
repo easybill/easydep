@@ -74,7 +74,7 @@ fn interpret_command_results(command_outputs: Vec<CommandResult>) -> (String, bo
         }
     }
 
-    let joined_log_lines = emitted_log_lines.join("\n").to_string();
+    let joined_log_lines = emitted_log_lines.join("\n");
     (joined_log_lines, process_failed)
 }
 
@@ -178,7 +178,7 @@ async fn handle_deploy_publish_request(
     match finish_result {
         Some(result) => {
             let pretty_printed_result = pretty_print_output(&result);
-            Ok((StatusCode::OK, pretty_printed_result.join("\n").to_string()))
+            Ok((StatusCode::OK, pretty_printed_result.join("\n")))
         }
         None => Ok((
             StatusCode::OK,

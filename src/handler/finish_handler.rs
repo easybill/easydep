@@ -24,7 +24,7 @@ async fn internal_finish_deployment(
     let deployment_link_path = Path::new(&options.deploy_link_dir);
 
     // remove the current symlink and create a new one
-    remove_symlink_dir(&deployment_link_path).ok();
+    remove_symlink_dir(deployment_link_path).ok();
     symlink_dir(&deployment_dir, deployment_link_path)?;
 
     // create all requested additional symlinks

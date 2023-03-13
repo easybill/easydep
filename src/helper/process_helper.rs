@@ -76,30 +76,25 @@ async fn wait_for_process(
     // read the full stdout
     let stdout_sender = sender.clone();
     let stdout = process.stdout.take().expect("Unable to get process stdout");
-    read_stream_output(stdout, stdout_sender, &mut join_set, |line| Stdout(line));
+    read_stream_output(stdout, stdout_sender, &mut join_set, Stdout);
 
     // read the full stderr
     let stderr_sender = sender.clone();
     let stderr = process.stderr.take().expect("Unable to get process stderr");
-    read_stream_output(stderr, stderr_sender, &mut join_set, |line| Stderr(line));
+    read_stream_output(stderr, stderr_sender, &mut join_set, Stderr);
 
     // spawn the thread that receives the lines
     let entry_target = Arc::clone(&target);
     join_set.spawn(async move {
-        loop {
-            match receiver.recv() {
-                Ok(entry) => {
-                    // exit the loop when receiving the exit signal
-                    if entry == StreamEntry::Exit {
-                        break;
-                    }
-
-                    let mut guard = entry_target.lock().expect("Could not acquire mutex guard");
-                    guard.push(entry);
-                    drop(guard);
-                }
-                Err(_) => break,
+        while let Ok(entry) = receiver.recv() {
+            // exit the loop when receiving the exit signal
+            if entry == StreamEntry::Exit {
+                break;
             }
+
+            let mut guard = entry_target.lock().expect("Could not acquire mutex guard");
+            guard.push(entry);
+            drop(guard);
         }
     });
 
@@ -111,7 +106,7 @@ async fn wait_for_process(
         .expect("Unable to notify about process exit");
 
     // wait for all futures to complete
-    while let Some(_) = join_set.join_next().await {}
+    while join_set.join_next().await.is_some() {}
 
     // unwrap the log lines & return the final result
     return match target.lock() {

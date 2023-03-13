@@ -37,7 +37,7 @@ impl DeploymentInformation {
         Path::new(".")
             .join(&self.options.base_directory)
             .join("releases")
-            .join(&self.release_id.to_string())
+            .join(self.release_id.to_string())
     }
 
     pub fn set_requested_state(&self, state: DeploymentState) -> anyhow::Result<(), anyhow::Error> {

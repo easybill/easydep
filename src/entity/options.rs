@@ -66,7 +66,7 @@ impl Options {
     pub fn parse_additional_symlinks(&self) -> Vec<Symlink> {
         self.additional_symlinks
             .split(";;")
-            .map(|part| part.split_once(":"))
+            .map(|part| part.split_once(':'))
             .filter(|split| split.is_some())
             .map(|split| {
                 let (link_name, target) = split.unwrap();

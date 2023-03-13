@@ -51,6 +51,7 @@ pub(crate) async fn call_and_aggregate_lifecycle_script(
         call_lifecycle_script(deploy_base_directory, lifecycle_event_name, state).await?;
 
     // return the previous result if there was an error
+    #[allow(clippy::question_mark)]
     if previous_result.is_err() {
         return previous_result;
     }

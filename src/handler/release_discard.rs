@@ -26,7 +26,7 @@ pub(crate) fn discord_oldest_release(options: &Options) -> anyhow::Result<(), an
 
     // check if there is a need to discord some entries
     // we subtract one entry here as it is the base git repository which does not count
-    let stored_releases = release_directories.len().checked_sub(1).unwrap_or(0);
+    let stored_releases = release_directories.len().saturating_sub(1);
     if max_stored_releases >= stored_releases {
         return Ok(());
     }
