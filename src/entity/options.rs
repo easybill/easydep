@@ -1,4 +1,11 @@
+use std::path::PathBuf;
 use structopt::StructOpt;
+
+#[derive(Debug, Clone)]
+pub(crate) struct Symlink {
+    pub link_name: String,
+    pub target: PathBuf,
+}
 
 #[derive(StructOpt, Debug, Clone)]
 pub(crate) struct Options {
@@ -32,4 +39,28 @@ pub(crate) struct Options {
         default_value = "15"
     )]
     pub deploy_publish_delay: i64,
+    // parsed internally, not exposed
+    #[structopt(
+        long = "symlinks",
+        env = "EASYDEP_DEPLOY_ADDITIONAL_SYMLINKS",
+        default_value = ""
+    )]
+    additional_symlinks: String,
+}
+
+impl Options {
+    pub fn parse_additional_symlinks(&self) -> Vec<Symlink> {
+        self.additional_symlinks
+            .split(";;")
+            .map(|part| part.split_once(":"))
+            .filter(|split| split.is_some())
+            .map(|split| {
+                let (link_name, target) = split.unwrap();
+                Symlink {
+                    link_name: link_name.to_string(),
+                    target: PathBuf::from(target.to_string()),
+                }
+            })
+            .collect()
+    }
 }

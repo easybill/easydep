@@ -3,7 +3,7 @@ use crate::entity::options::Options;
 use crate::handler::call_followup_lifecycle_script;
 use crate::helper::process_helper::CommandResult;
 use std::path::Path;
-use symlink::{remove_symlink_dir, symlink_dir};
+use symlink::{remove_symlink_auto, remove_symlink_dir, symlink_auto, symlink_dir};
 
 pub(crate) async fn finish_deployment(
     options: &Options,
@@ -24,6 +24,19 @@ async fn internal_finish_deployment(
 
     // remove the current symlink and create a new one
     remove_symlink_dir(&deployment_link_path).ok();
-    symlink_dir(deployment_dir, deployment_link_path)?;
+    symlink_dir(&deployment_dir, deployment_link_path)?;
+
+    // create all requested additional symlinks
+    let additional_symlinks = options.parse_additional_symlinks();
+    for additional_symlink in additional_symlinks {
+        let link_target = deployment_dir.join(additional_symlink.link_name);
+        println!(
+            "Trying to link {:?} to {:?}",
+            &link_target, &additional_symlink.target
+        );
+        remove_symlink_auto(&link_target).ok();
+        symlink_auto(additional_symlink.target, link_target)?;
+    }
+
     Ok(())
 }
