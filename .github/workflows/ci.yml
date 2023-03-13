@@ -16,6 +16,32 @@ concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    name: Run various code linters
+
+    permissions:
+      checks: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Run rustfmt
+        run: cargo fmt --check
+
+      - name: Run clippy
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
   build:
     permissions: read-all
     runs-on: ${{ matrix.platform.os }}
@@ -62,7 +88,7 @@ jobs:
           name: easydep_${{ matrix.platform.osn }}_${{ matrix.platform.arch }}
 
   release:
-    needs: [ "build" ]
+    needs: [ "check", "build" ]
     name: Publish Release
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release == 'true' }}
