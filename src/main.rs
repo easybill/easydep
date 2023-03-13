@@ -19,16 +19,16 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::{middleware, routing, Extension, Router, Server};
 use chrono::{TimeZone, Utc};
+use clap::Parser;
 use entity::requests::{CancelRequest, InitRequest, PublishRequest};
 use std::net::SocketAddr;
 use std::ops::Add;
 use std::time::{Duration, Instant};
-use structopt::StructOpt;
 use tokio::time::sleep;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<(), anyhow::Error> {
-    let options = Options::from_args();
+    let options = Options::parse();
 
     let cache_time_seconds = options.release_cache_seconds * 60;
     let deploy_cache = DeploymentCache::new(cache_time_seconds);
