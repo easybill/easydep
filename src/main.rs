@@ -30,7 +30,7 @@ use tokio::time::sleep;
 async fn main() -> anyhow::Result<(), anyhow::Error> {
     let options = Options::from_args();
 
-    let cache_time_seconds = 15 * 60;
+    let cache_time_seconds = options.release_cache_seconds * 60;
     let deploy_cache = DeploymentCache::new(cache_time_seconds);
 
     let routing: Router<(), Body> = Router::new()

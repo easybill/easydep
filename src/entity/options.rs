@@ -39,6 +39,12 @@ pub(crate) struct Options {
         default_value = "15"
     )]
     pub deploy_publish_delay: i64,
+    #[structopt(
+        long = "cache-time",
+        env = "EASYDEP_RELEASE_CACHE_TIME",
+        default_value = "15"
+    )]
+    pub release_cache_seconds: u64,
     // parsed internally, not exposed
     #[structopt(
         long = "symlinks",

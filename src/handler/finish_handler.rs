@@ -30,10 +30,6 @@ async fn internal_finish_deployment(
     let additional_symlinks = options.parse_additional_symlinks();
     for additional_symlink in additional_symlinks {
         let link_target = deployment_dir.join(additional_symlink.link_name);
-        println!(
-            "Trying to link {:?} to {:?}",
-            &link_target, &additional_symlink.target
-        );
         remove_symlink_auto(&link_target).ok();
         symlink_auto(additional_symlink.target, link_target)?;
     }
