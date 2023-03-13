@@ -2,6 +2,7 @@ pub(crate) mod cancel_handler;
 pub(crate) mod finish_handler;
 pub(crate) mod github;
 pub(crate) mod init_handler;
+pub(crate) mod release_discard;
 
 use crate::helper::process_helper::{run_command, CommandResult};
 use std::fmt::Debug;

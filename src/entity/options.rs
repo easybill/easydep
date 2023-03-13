@@ -47,6 +47,12 @@ pub(crate) struct Options {
     pub release_cache_seconds: u64,
     // parsed internally, not exposed
     #[structopt(
+        long = "max-stored-releases",
+        env = "EASYDEP_MAX_STORED_RELEASES",
+        default_value = "10"
+    )]
+    max_releases_to_store: u64,
+    #[structopt(
         long = "symlinks",
         env = "EASYDEP_DEPLOY_ADDITIONAL_SYMLINKS",
         default_value = ""
@@ -55,6 +61,10 @@ pub(crate) struct Options {
 }
 
 impl Options {
+    pub fn max_stored_releases(&self) -> u64 {
+        self.max_releases_to_store.max(2)
+    }
+
     pub fn parse_additional_symlinks(&self) -> Vec<Symlink> {
         self.additional_symlinks
             .split(";;")

@@ -1,6 +1,7 @@
 use crate::entity::deployment::DeploymentInformation;
 use crate::entity::options::Options;
 use crate::handler::call_followup_lifecycle_script;
+use crate::handler::release_discard::discord_oldest_release;
 use crate::helper::process_helper::CommandResult;
 use std::path::Path;
 use symlink::{remove_symlink_auto, remove_symlink_dir, symlink_auto, symlink_dir};
@@ -33,6 +34,9 @@ async fn internal_finish_deployment(
         remove_symlink_auto(&link_target).ok();
         symlink_auto(additional_symlink.target, link_target)?;
     }
+
+    // cleanup (by removing the oldest release)
+    discord_oldest_release(options)?;
 
     Ok(())
 }
