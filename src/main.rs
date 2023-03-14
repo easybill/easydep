@@ -10,6 +10,7 @@ use crate::entity::options::Options;
 use crate::handler::cancel_handler::cancel_deployment;
 use crate::handler::finish_handler::finish_deployment;
 use crate::handler::init_handler::init_deployment;
+use crate::handler::initial_handler::handle_initial_start;
 use crate::helper::process_helper::{pretty_print_output, CommandResult};
 use crate::http::auth::handle_auth;
 use crate::http::error_handling::HandlerError;
@@ -30,9 +31,14 @@ use tokio::time::sleep;
 async fn main() -> anyhow::Result<(), anyhow::Error> {
     let options = Options::parse();
 
+    // execute any published release that we didn't have locally
+    handle_initial_start(&options).await?;
+
+    // build the deployment cache
     let cache_time_seconds = options.release_cache_seconds * 60;
     let deploy_cache = DeploymentCache::new(cache_time_seconds);
 
+    // build the http router
     let routing: Router<(), Body> = Router::new()
         .route("/deploy/start", routing::post(handle_deploy_start_request))
         .route(
@@ -47,6 +53,7 @@ async fn main() -> anyhow::Result<(), anyhow::Error> {
         .layer(Extension(options.clone()))
         .layer(Extension(deploy_cache));
 
+    // bind the http server
     let address = options
         .bind_host
         .parse::<SocketAddr>()
@@ -95,7 +102,7 @@ async fn handle_deploy_start_request(
     }
 
     // construct the deployment information
-    let new_information = DeploymentInformation::new(&request, &options);
+    let new_information = DeploymentInformation::new_from_request(&request, &options);
     let deployment_information =
         deploy_cache.insert_deployment(request.release_id, new_information)?;
 

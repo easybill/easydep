@@ -8,7 +8,7 @@ use std::sync::Arc;
 #[derive(Debug, Clone)]
 pub(crate) struct DeploymentInformation {
     pub tag_name: String,
-    pub release_id: i64,
+    pub release_id: u64,
     options: Options,
     state: Arc<ShardedLock<DeploymentState>>,
     requested_state: Arc<ShardedLock<Option<DeploymentState>>>,
@@ -23,10 +23,20 @@ pub(crate) enum DeploymentState {
 }
 
 impl DeploymentInformation {
-    pub fn new(request: &InitRequest, options: &Options) -> Self {
+    pub fn new_from_request(request: &InitRequest, options: &Options) -> Self {
         Self {
             tag_name: request.tag_name.clone(),
             release_id: request.release_id,
+            options: options.clone(),
+            state: Arc::new(ShardedLock::new(DeploymentState::Init)),
+            requested_state: Arc::new(ShardedLock::new(None)),
+        }
+    }
+
+    pub fn new(tag_name: String, release_id: u64, options: &Options) -> Self {
+        Self {
+            tag_name,
+            release_id,
             options: options.clone(),
             state: Arc::new(ShardedLock::new(DeploymentState::Init)),
             requested_state: Arc::new(ShardedLock::new(None)),

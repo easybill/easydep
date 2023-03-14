@@ -7,7 +7,7 @@ pub(crate) fn discord_oldest_release(options: &Options) -> anyhow::Result<(), an
     let base_directory = Path::new(&options.base_directory).join("releases");
 
     // get all directory paths in the directory
-    let mut release_directories: Vec<(PathBuf, i32)> = read_dir(base_directory)?
+    let mut release_directories: Vec<(PathBuf, u64)> = read_dir(base_directory)?
         .filter_map(|res| res.ok())
         .filter(|entry| {
             entry
@@ -19,7 +19,7 @@ pub(crate) fn discord_oldest_release(options: &Options) -> anyhow::Result<(), an
         .filter_map(|path| {
             path.file_name()
                 .and_then(|dir_name| dir_name.to_str().map(|name| name.to_string()))
-                .and_then(|dir_name| dir_name.parse::<i32>().ok())
+                .and_then(|dir_name| dir_name.parse::<u64>().ok())
                 .map(|id| (path, id))
         })
         .collect();
