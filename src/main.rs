@@ -111,8 +111,17 @@ async fn handle_deploy_start_request(
         ));
     }
 
-    // construct the deployment information
+    // construct the deployment information & check if it was already executed
     let new_information = DeploymentInformation::new_from_request(&request, &options);
+    let deployment_directory = new_information.base_directory();
+    if deployment_directory.exists() {
+        return Ok((
+            StatusCode::BAD_REQUEST,
+            String::from("A deployment with the same id was already requested!"),
+        ));
+    }
+
+    // insert the deployment into the cache
     let deployment_information =
         deploy_cache.insert_deployment(request.release_id, new_information)?;
 
