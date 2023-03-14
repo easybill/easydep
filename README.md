@@ -4,8 +4,10 @@
 ![Build status](https://img.shields.io/github/actions/workflow/status/easybill/easydep/ci.yml)
 ![Release version](https://img.shields.io/github/v/release/easybill/easydep)
 
-Easydep is a small, simple tool to automatically pull a release from GitHub (using a GitHub app), run a script inside
-the cloned repository, and symlink to the prepared directory to make it available as the latest release.
+Easydep is a small, HTTP driven & simple tool to automatically clone a repository from GitHub(using a GitHub app),
+checking out a specific tag, execute a script located inside repository, and symlink to the prepared directory to make
+it available as the latest release. It was also built to allow parallel deployment to multiple servers without one
+server finishing with one version of the deployment way before the others.
 
 ### Env Configuration
 
