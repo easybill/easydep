@@ -58,7 +58,7 @@ sudo nano /etc/systemd/system/easydep.service
 
 #### Service Configuration
 
-```
+```service
 [Unit]
 Description=Easydep
 After=network-online.target
