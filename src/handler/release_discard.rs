@@ -1,4 +1,5 @@
 use crate::entity::options::Options;
+use log::info;
 use std::fs::{read_dir, remove_dir_all};
 use std::path::{Path, PathBuf};
 
@@ -28,6 +29,10 @@ pub(crate) fn discord_oldest_release(options: &Options) -> anyhow::Result<(), an
     // we subtract one entry here as it is the base git repository which does not count
     let stored_releases = release_directories.len().saturating_sub(1);
     if max_stored_releases >= stored_releases {
+        info!(
+            "No need to remove any release (stored releases: {}, number of releases to keep: {})",
+            stored_releases, max_stored_releases
+        );
         return Ok(());
     }
 
@@ -35,8 +40,9 @@ pub(crate) fn discord_oldest_release(options: &Options) -> anyhow::Result<(), an
     // then remove the oldest release (only remove one release per call)
     release_directories.sort_by(|left, right| left.1.cmp(&right.1));
     if let Some(release_to_remove) = release_directories.first() {
-        let (release_directory, _) = release_to_remove;
+        let (release_directory, release_id) = release_to_remove;
         if release_directory.exists() {
+            info!("Removing oldest stored release {}", release_id);
             remove_dir_all(release_directory)?;
         }
     }

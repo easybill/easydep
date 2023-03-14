@@ -23,7 +23,7 @@ use axum::{middleware, routing, Extension, Router, Server};
 use chrono::{TimeZone, Utc};
 use clap::Parser;
 use entity::requests::{CancelRequest, InitRequest, PublishRequest};
-use log::info;
+use log::{debug, info};
 use std::net::SocketAddr;
 use std::ops::Add;
 use std::time::{Duration, Instant};
@@ -63,6 +63,7 @@ async fn main() -> anyhow::Result<(), anyhow::Error> {
         .bind_host
         .parse::<SocketAddr>()
         .expect("Cannot parse provided bind host address");
+    info!("HTTP server is listening on {}", address);
     Server::bind(&address)
         .serve(routing.into_make_service())
         .await?;
@@ -96,6 +97,10 @@ async fn handle_deploy_start_request(
     info: Query<InitRequest>,
 ) -> anyhow::Result<impl IntoResponse, HandlerError> {
     let request = info.0;
+    info!(
+        "Received request to execute a new deployment (id: {}, tag name: {})",
+        request.release_id, request.tag_name
+    );
 
     // ensure that the request is not processed twice
     let information = deploy_cache.read_deployment(&request.release_id)?;
@@ -137,6 +142,10 @@ async fn handle_deploy_publish_request(
     info: Query<PublishRequest>,
 ) -> anyhow::Result<impl IntoResponse, HandlerError> {
     let request = info.0;
+    info!(
+        "Received request to publish deployment (id: {}, base time: {})",
+        request.release_id, request.base_time
+    );
 
     // get the existing request
     let read_result = deploy_cache.read_deployment(&request.release_id)?;
@@ -179,6 +188,10 @@ async fn handle_deploy_publish_request(
     // get the time that we actually need to sleep
     let sleep_duration = (deployment_base_time - Utc::now()).num_seconds();
     if sleep_duration > 0 {
+        debug!(
+            "Need to sleep {} seconds before publishing release {}",
+            sleep_duration, request.release_id
+        );
         sleep(Duration::from_secs(sleep_duration as u64)).await;
     }
 
@@ -204,6 +217,10 @@ async fn handle_deploy_cancel_request(
     info: Query<CancelRequest>,
 ) -> anyhow::Result<impl IntoResponse, HandlerError> {
     let request = info.0;
+    info!(
+        "Received request to cancel deployment {}",
+        request.release_id
+    );
 
     // get the existing request
     let read_result = deploy_cache.read_deployment(&request.release_id)?;
@@ -232,6 +249,10 @@ async fn handle_deploy_cancel_request(
 
     // request the movement to the cancelled state (if needed)
     if deployment_state != DeploymentState::Publishable {
+        debug!(
+            "Requesting cancellation of deployment {}, waiting for state change...",
+            request.release_id
+        );
         deploy_information.set_requested_state(DeploymentState::Cancelled)?;
 
         // wait for the deployment to get cancelled

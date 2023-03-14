@@ -4,6 +4,7 @@ use crate::handler::call_and_aggregate_lifecycle_script;
 use crate::handler::github::read_installation_token;
 use crate::helper::process_helper::{run_command, CommandResult};
 use fs_extra::dir::{copy, CopyOptions};
+use log::info;
 use secrecy::ExposeSecret;
 use std::fs::{create_dir, remove_dir_all};
 use std::path::Path;
@@ -42,6 +43,8 @@ async fn internal_init_deployment(
     // get the repository base directory
     let repository_directory = path.join(".easydep_base_repo");
     if repository_directory.exists() {
+        info!("Easydep base repo directory exists, changing remote fetch url");
+
         // set the git url of the existing repository to the new one that is not expired yet
         let mut git_remote_set_url_command = Command::new("git");
         git_remote_set_url_command
@@ -52,6 +55,8 @@ async fn internal_init_deployment(
             .current_dir(&repository_directory);
         command_results.push(run_command(git_remote_set_url_command).await?);
     } else {
+        info!("Easydep base repo directory is missing, executing initial clone");
+
         // clone the repository initially
         let mut git_clone_command = Command::new("git");
         git_clone_command
@@ -75,6 +80,10 @@ async fn internal_init_deployment(
     copy(&repository_directory, &deploy_repo_dir, &options)?;
 
     // fetch the updated content from the remote
+    info!(
+        "Fetching git remote for deployment directory {:?}",
+        deploy_repo_dir
+    );
     let mut git_fetch_command = Command::new("git");
     git_fetch_command
         .arg("fetch")
@@ -85,6 +94,10 @@ async fn internal_init_deployment(
     command_results.push(run_command(git_fetch_command).await?);
 
     // reset the directory to the target tag
+    info!(
+        "Resetting deployment directory {:?} to tag {}",
+        deploy_repo_dir, info.tag_name
+    );
     let mut git_reset_command = Command::new("git");
     git_reset_command
         .arg("reset")
@@ -101,6 +114,10 @@ async fn internal_init_deployment(
     info.switch_to_requested_state()?;
 
     // run the deploy script (if it exists)
+    info!(
+        "Executing deployment script in {:?} ({})",
+        deploy_repo_dir, info.tag_name
+    );
     let deploy_script_path = deploy_repo_dir.join(".easydep").join("execute.sh");
     if deploy_script_path.exists() {
         let mut script_execute_command = Command::new("bash");

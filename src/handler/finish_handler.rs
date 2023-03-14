@@ -3,6 +3,7 @@ use crate::entity::options::Options;
 use crate::handler::call_followup_lifecycle_script;
 use crate::handler::release_discard::discord_oldest_release;
 use crate::helper::process_helper::CommandResult;
+use log::info;
 use std::path::Path;
 use symlink::{remove_symlink_auto, remove_symlink_dir, symlink_auto, symlink_dir};
 
@@ -23,10 +24,6 @@ async fn internal_finish_deployment(
     let deployment_dir = info.base_directory();
     let deployment_link_path = Path::new(&options.deploy_link_dir);
 
-    // remove the current symlink and create a new one
-    remove_symlink_dir(deployment_link_path).ok();
-    symlink_dir(&deployment_dir, deployment_link_path)?;
-
     // create all requested additional symlinks
     let additional_symlinks = options.parse_additional_symlinks();
     for additional_symlink in additional_symlinks {
@@ -35,7 +32,17 @@ async fn internal_finish_deployment(
         symlink_auto(additional_symlink.target, link_target)?;
     }
 
+    info!(
+        "Additional symlinks for deployment created, publishing release {}",
+        info.release_id
+    );
+
+    // remove the current symlink and create a new one
+    remove_symlink_dir(deployment_link_path).ok();
+    symlink_dir(&deployment_dir, deployment_link_path)?;
+
     // cleanup (by removing the oldest release)
+    info!("Published one release, trying to discord the oldest release");
     discord_oldest_release(options)?;
 
     Ok(())

@@ -12,12 +12,18 @@ use std::path::Path;
 pub(crate) async fn handle_initial_start(options: &Options) -> anyhow::Result<(), anyhow::Error> {
     let latest_release = read_latest_release(options).await?;
     if let Some(release) = latest_release {
+        info!(
+            "Resolved latest release to be {} (tag: {})",
+            release.id, release.tag_name
+        );
+
         // check if the release already exists
         let base_directory = Path::new(&options.base_directory).join("releases");
         let release_directory = base_directory.join(release.id.to_string());
 
         // check if the release already exists
         if !release_directory.exists() {
+            info!("Latest release wasn't deployment before, pulling now...");
             let deploy_information =
                 DeploymentInformation::new(release.tag_name, release.id.0, options);
 
