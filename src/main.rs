@@ -40,7 +40,7 @@ async fn main() -> anyhow::Result<(), anyhow::Error> {
     handle_initial_start(&options).await?;
 
     // build the deployment cache
-    let cache_time_seconds = options.release_cache_seconds * 60;
+    let cache_time_seconds = options.release_cache_minutes * 60;
     let deploy_cache = DeploymentCache::new(cache_time_seconds);
 
     // build the http router
@@ -182,7 +182,7 @@ async fn handle_deploy_publish_request(
     }
 
     // get the time until we should sleep
-    let sleep_seconds = chrono::Duration::seconds(options.deploy_publish_delay);
+    let sleep_seconds = chrono::Duration::seconds(options.deploy_publish_delay_seconds);
     let deployment_base_time = deployment_base_instant.unwrap() + sleep_seconds;
 
     // get the time that we actually need to sleep

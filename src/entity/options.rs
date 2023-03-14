@@ -41,13 +41,13 @@ pub(crate) struct Options {
         default_value_t = 15,
         value_parser = clap::value_parser!(i64).range(0..)
     )]
-    pub deploy_publish_delay: i64,
+    pub deploy_publish_delay_seconds: i64,
     #[arg(
         long = "cache-time",
         env = "EASYDEP_RELEASE_CACHE_TIME",
         default_value_t = 15
     )]
-    pub release_cache_seconds: u64,
+    pub release_cache_minutes: u64,
     #[arg(
         long = "max-stored-releases",
         env = "EASYDEP_MAX_STORED_RELEASES",
