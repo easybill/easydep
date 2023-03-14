@@ -9,6 +9,8 @@ pub(crate) struct Symlink {
 
 #[derive(Parser, Debug, Clone)]
 pub(crate) struct Options {
+    #[arg(long = "debug", env = "EASYDEP_LOG_DEBUG", default_value_t = false)]
+    pub debug: bool,
     #[arg(
         long = "token",
         env = "EASYDEP_REQUEST_AUTH_TOKEN",

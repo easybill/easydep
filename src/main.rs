@@ -11,6 +11,7 @@ use crate::handler::cancel_handler::cancel_deployment;
 use crate::handler::finish_handler::finish_deployment;
 use crate::handler::init_handler::init_deployment;
 use crate::handler::initial_handler::handle_initial_start;
+use crate::helper::logging_setup::setup_logging;
 use crate::helper::process_helper::{pretty_print_output, CommandResult};
 use crate::http::auth::handle_auth;
 use crate::http::error_handling::HandlerError;
@@ -22,6 +23,7 @@ use axum::{middleware, routing, Extension, Router, Server};
 use chrono::{TimeZone, Utc};
 use clap::Parser;
 use entity::requests::{CancelRequest, InitRequest, PublishRequest};
+use log::info;
 use std::net::SocketAddr;
 use std::ops::Add;
 use std::time::{Duration, Instant};
@@ -29,9 +31,12 @@ use tokio::time::sleep;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<(), anyhow::Error> {
+    // load options & setup logging
     let options = Options::parse();
+    setup_logging(&options)?;
 
     // execute any published release that we didn't have locally
+    info!("Checking if there are any non-polled released on GitHub...");
     handle_initial_start(&options).await?;
 
     // build the deployment cache

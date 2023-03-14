@@ -6,6 +6,7 @@ use crate::handler::github::read_latest_release;
 use crate::handler::init_handler::init_deployment;
 use crate::helper::process_helper::{pretty_print_output, CommandResult};
 use anyhow::anyhow;
+use log::info;
 use std::path::Path;
 
 pub(crate) async fn handle_initial_start(options: &Options) -> anyhow::Result<(), anyhow::Error> {
@@ -54,5 +55,5 @@ fn interpret_and_print_command_results(results: Vec<CommandResult>) -> bool {
 
 fn print_command_result(result: &CommandResult) {
     let pretty_result = pretty_print_output(result).join("\n");
-    println!("{}", pretty_result);
+    info!("{}", pretty_result);
 }
