@@ -9,6 +9,7 @@ use secrecy::ExposeSecret;
 use std::fs::{create_dir_all, remove_dir_all};
 use std::path::Path;
 use std::process::Command;
+use symlink::{remove_symlink_auto, symlink_auto};
 
 pub(crate) async fn init_deployment(
     options: &Options,
@@ -73,11 +74,11 @@ async fn internal_init_deployment(
 
     // copy the created base directory to the target deployment directory
     let deploy_repo_dir = info.base_directory();
-    let options = CopyOptions::new()
+    let copy_options = CopyOptions::new()
         .overwrite(true)
         .copy_inside(true)
         .content_only(true);
-    copy(&repository_directory, &deploy_repo_dir, &options)?;
+    copy(&repository_directory, &deploy_repo_dir, &copy_options)?;
 
     // fetch the updated content from the remote
     info!(
@@ -109,6 +110,19 @@ async fn internal_init_deployment(
     // remove the git directory, ignore possible errors
     let git_path = deploy_repo_dir.join(".git");
     remove_dir_all(git_path).ok();
+
+    // create all requested additional symlinks
+    let additional_symlinks = options.parse_additional_symlinks();
+    for additional_symlink in additional_symlinks {
+        let link_target = deploy_repo_dir.join(additional_symlink.link_name);
+        remove_symlink_auto(&link_target).ok();
+        symlink_auto(additional_symlink.target, link_target)?;
+    }
+
+    info!(
+        "Additional symlinks for deployment {} created",
+        info.release_id
+    );
 
     // check if the deployment is still in the expected state before continuing
     info.switch_to_requested_state()?;
