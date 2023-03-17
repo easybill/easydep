@@ -81,10 +81,15 @@ jobs:
           use-cross: true
           args: --release --target ${{ matrix.platform.target }} --bin easydep
 
+      - name: Move artifacts
+        run: |
+          mkdir -p artifact
+          cp target/${{ matrix.platform.target }}/release/easydep artifact/easydep_${{ matrix.platform.osn }}_${{ matrix.platform.arch }}
+
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          path: target/${{ matrix.platform.target }}/release/easydep
+          path: artifact/easydep_${{ matrix.platform.osn }}_${{ matrix.platform.arch }}
           name: easydep_${{ matrix.platform.osn }}_${{ matrix.platform.arch }}
 
   release:
