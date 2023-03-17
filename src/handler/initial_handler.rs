@@ -60,6 +60,8 @@ fn interpret_and_print_command_results(results: Vec<CommandResult>) -> bool {
 }
 
 fn print_command_result(result: &CommandResult) {
-    let pretty_result = pretty_print_output(result).join("\n");
-    info!("{}", pretty_result);
+    let pretty_output = pretty_print_output(result);
+    for line in pretty_output {
+        info!("{}", line);
+    }
 }
