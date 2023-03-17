@@ -116,13 +116,13 @@ async fn internal_init_deployment(
     for additional_symlink in additional_symlinks {
         let link_target = deploy_repo_dir.join(additional_symlink.link_name);
         remove_symlink_auto(&link_target).ok();
+
+        info!(
+            "Trying to add additional symlink: {:?} -> {:?}",
+            link_target, additional_symlink.target
+        );
         symlink_auto(additional_symlink.target, link_target)?;
     }
-
-    info!(
-        "Additional symlinks for deployment {} created",
-        info.release_id
-    );
 
     // check if the deployment is still in the expected state before continuing
     info.switch_to_requested_state()?;
