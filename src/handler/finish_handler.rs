@@ -22,10 +22,10 @@ async fn internal_finish_deployment(
 ) -> anyhow::Result<(), anyhow::Error> {
     // get the paths to link
     let deployment_dir = info.base_directory();
-    let deployment_link_path = Path::new(&options.deploy_link_dir);
+    let deployment_link_path = Path::new(&options.base_directory).join(&options.deploy_link_dir);
 
     // remove the current symlink and create a new one
-    remove_symlink_dir(deployment_link_path).ok();
+    remove_symlink_dir(&deployment_link_path).ok();
     symlink_dir(deployment_dir, deployment_link_path)?;
 
     // cleanup (by removing the oldest release)
