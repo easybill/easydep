@@ -115,12 +115,17 @@ async fn internal_init_deployment(
     let additional_symlinks = options.parse_additional_symlinks();
     for additional_symlink in additional_symlinks {
         let link_target = deploy_repo_dir.join(additional_symlink.link_name);
-        remove_symlink_auto(&link_target).ok();
-
         info!(
             "Trying to add additional symlink: {:?} -> {:?}",
             link_target, additional_symlink.target
         );
+
+        // create the parent directory of the link, if missing
+        if let Some(parent) = link_target.parent() {
+            create_dir_all(parent)?;
+        }
+
+        remove_symlink_auto(&link_target).ok();
         symlink_auto(additional_symlink.target, link_target)?;
     }
 
