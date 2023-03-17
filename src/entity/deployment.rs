@@ -44,8 +44,7 @@ impl DeploymentInformation {
     }
 
     pub fn base_directory(&self) -> PathBuf {
-        Path::new(".")
-            .join(&self.options.base_directory)
+        Path::new(&self.options.base_directory)
             .join("releases")
             .join(self.release_id.to_string())
     }
