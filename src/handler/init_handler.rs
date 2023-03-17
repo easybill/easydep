@@ -6,7 +6,7 @@ use crate::helper::process_helper::{run_command, CommandResult};
 use fs_extra::dir::{copy, CopyOptions};
 use log::info;
 use secrecy::ExposeSecret;
-use std::fs::{create_dir, remove_dir_all};
+use std::fs::{create_dir_all, remove_dir_all};
 use std::path::Path;
 use std::process::Command;
 
@@ -37,7 +37,7 @@ async fn internal_init_deployment(
     // create the deployment base directory if it doesn't exist yet
     let path = Path::new(&options.base_directory);
     if !path.exists() {
-        create_dir(path)?;
+        create_dir_all(path)?;
     }
 
     // get the repository base directory
