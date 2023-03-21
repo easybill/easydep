@@ -22,7 +22,6 @@ codegen-units = 1
 anyhow = "*"
 axum = "0.6.*"
 serde = "1.0.*"
-chrono = "0.4.*"
 cached = "0.42.*"
 secrecy = "0.8.*"
 symlink = "0.1.*"
@@ -31,6 +30,7 @@ crossbeam = "0.8.*"
 serde_derive = "1.0.*"
 jsonwebtoken = "8.2.*"
 tokio = { version = "1.26.*", features = ["full"] }
+chrono = { version = "0.4.*", default-features = false }
 clap = { version = "4.1.*", features = ["derive", "env"] }
 octocrab = { version = "0.18.*", features = ["rustls-tls"], default-features = false }
 
