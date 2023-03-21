@@ -1,12 +1,11 @@
 use crate::entity::deployment::DeploymentInformation;
 use anyhow::anyhow;
 use cached::{Cached, TimedCache};
-use crossbeam::sync::ShardedLock;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Debug)]
 pub(crate) struct DeploymentCache {
-    cache: Arc<ShardedLock<TimedCache<u64, Arc<DeploymentInformation>>>>,
+    cache: Arc<Mutex<TimedCache<u64, Arc<DeploymentInformation>>>>,
 }
 
 impl DeploymentCache {
@@ -14,7 +13,7 @@ impl DeploymentCache {
         let cache: TimedCache<u64, Arc<DeploymentInformation>> =
             TimedCache::with_lifespan_and_refresh(cache_time_secs, true);
         Self {
-            cache: Arc::new(ShardedLock::new(cache)),
+            cache: Arc::new(Mutex::new(cache)),
         }
     }
 
@@ -23,7 +22,7 @@ impl DeploymentCache {
         release_id: u64,
         deployment_info: DeploymentInformation,
     ) -> anyhow::Result<Arc<DeploymentInformation>, anyhow::Error> {
-        let lock_result = self.cache.write();
+        let lock_result = self.cache.lock();
         match lock_result {
             Ok(mut guard) => {
                 let information = Arc::new(deployment_info);
@@ -38,7 +37,7 @@ impl DeploymentCache {
         &self,
         release_id: &u64,
     ) -> anyhow::Result<Option<Arc<DeploymentInformation>>, anyhow::Error> {
-        let lock_result = self.cache.write();
+        let lock_result = self.cache.lock();
         match lock_result {
             Ok(mut guard) => {
                 let cache_read_result = guard.cache_get(release_id);
@@ -49,7 +48,7 @@ impl DeploymentCache {
     }
 
     pub fn remove_deployment(&self, release_id: &u64) -> anyhow::Result<(), anyhow::Error> {
-        let lock_result = self.cache.write();
+        let lock_result = self.cache.lock();
         match lock_result {
             Ok(mut guard) => {
                 guard.cache_remove(release_id);

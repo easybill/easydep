@@ -3,7 +3,7 @@ use crate::entity::requests::InitRequest;
 use anyhow::anyhow;
 use crossbeam::sync::ShardedLock;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone)]
 pub(crate) struct DeploymentInformation {
@@ -11,7 +11,7 @@ pub(crate) struct DeploymentInformation {
     pub release_id: u64,
     options: Options,
     state: Arc<ShardedLock<DeploymentState>>,
-    requested_state: Arc<ShardedLock<Option<DeploymentState>>>,
+    requested_state: Arc<Mutex<Option<DeploymentState>>>,
 }
 
 #[derive(PartialEq, PartialOrd, Clone, Debug)]
@@ -29,7 +29,7 @@ impl DeploymentInformation {
             release_id: request.release_id,
             options: options.clone(),
             state: Arc::new(ShardedLock::new(DeploymentState::Init)),
-            requested_state: Arc::new(ShardedLock::new(None)),
+            requested_state: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -39,7 +39,7 @@ impl DeploymentInformation {
             release_id,
             options: options.clone(),
             state: Arc::new(ShardedLock::new(DeploymentState::Init)),
-            requested_state: Arc::new(ShardedLock::new(None)),
+            requested_state: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -50,7 +50,7 @@ impl DeploymentInformation {
     }
 
     pub fn set_requested_state(&self, state: DeploymentState) -> anyhow::Result<(), anyhow::Error> {
-        let lock_result = self.requested_state.write();
+        let lock_result = self.requested_state.lock();
         match lock_result {
             Ok(mut guard) => {
                 *guard = Some(state);
@@ -61,7 +61,7 @@ impl DeploymentInformation {
     }
 
     pub fn switch_to_requested_state(&self) -> anyhow::Result<(), anyhow::Error> {
-        let lock_result = self.requested_state.write();
+        let lock_result = self.requested_state.lock();
         match lock_result {
             Ok(mut guard) => {
                 let current_request = guard.clone();
