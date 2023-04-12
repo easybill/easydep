@@ -55,6 +55,12 @@ pub(crate) struct Options {
         value_parser = clap::value_parser!(u64).range(3..)
     )]
     pub max_releases_to_store: u64,
+    #[arg(
+        long = "revision-file",
+        env = "EASYDEP_REVISION_FILE",
+        default_value = "REVISION"
+    )]
+    pub git_revision_file: String,
     // parsed internally, not exposed
     #[arg(
         long = "symlinks",

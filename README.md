@@ -49,6 +49,8 @@ server finishing with one version of the deployment way before the others.
   releases will be deleted when a new releases is executed. The given value can be any positive number than is larger
   than 2. This variable defaults to `10`.
 * `EASYDEP_LOG_DEBUG`: Set this variable to `true` to enable debug logging. This variable defaults to `false`.
+* `EASYDEP_REVISION_FILE`: Sets the name of the file to write the current git revision to. If set to an empty string the
+  current revision is not written to any file. This variable defaults to `REVISION`.
 
 ### Systemd
 

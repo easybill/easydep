@@ -3,9 +3,11 @@ use crate::entity::options::Options;
 use crate::handler::call_and_aggregate_lifecycle_script;
 use crate::handler::github::read_installation_token;
 use crate::helper::process_helper::{run_command, CommandResult};
+use anyhow::anyhow;
 use fs_extra::dir::{copy, CopyOptions};
 use log::info;
 use secrecy::ExposeSecret;
+use std::fs;
 use std::fs::{create_dir_all, remove_dir_all};
 use std::path::Path;
 use std::process::Command;
@@ -106,6 +108,29 @@ async fn internal_init_deployment(
         .arg(&info.tag_name)
         .current_dir(&deploy_repo_dir);
     command_results.push(run_command(git_reset_command).await?);
+
+    // write revision file if requested
+    let revision_file_name = &options.git_revision_file;
+    if !revision_file_name.is_empty() {
+        let revision_file_path = &deploy_repo_dir.join(revision_file_name);
+        info!("Writing current revision into {:?}", revision_file_path);
+
+        let rev_parse_output = Command::new("git")
+            .arg("rev-parse")
+            .arg(&info.tag_name)
+            .current_dir(&deploy_repo_dir)
+            .output()?;
+        if rev_parse_output.status.success() {
+            fs::write(revision_file_path, rev_parse_output.stdout)?;
+        } else {
+            let stderr_output = String::from_utf8_lossy(rev_parse_output.stderr.as_slice());
+            return Err(anyhow!(
+                "Unable to execute rev-parse git command, got output status: {}, Log: {}",
+                rev_parse_output.status,
+                stderr_output
+            ));
+        }
+    }
 
     // remove the git directory, ignore possible errors
     let git_path = deploy_repo_dir.join(".git");
