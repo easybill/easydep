@@ -3,7 +3,7 @@ use log::info;
 use std::fs::{read_dir, remove_dir_all};
 use std::path::{Path, PathBuf};
 
-pub(crate) fn discord_oldest_release(options: &Options) -> anyhow::Result<(), anyhow::Error> {
+pub(crate) fn discard_oldest_release(options: &Options) -> anyhow::Result<(), anyhow::Error> {
     let max_stored_releases = options.max_releases_to_store as usize;
     let base_directory = Path::new(&options.base_directory).join("releases");
 
