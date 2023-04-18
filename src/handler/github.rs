@@ -38,9 +38,8 @@ pub(crate) async fn read_latest_release(
         .await?
         .items;
     let mut non_draft_releases: Vec<Release> = last_releases
-        .iter()
+        .into_iter()
         .filter(|release| !release.prerelease && !release.draft)
-        .map(|release| release.to_owned())
         .collect();
 
     // sort the releases by id, descending
