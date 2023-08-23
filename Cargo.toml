@@ -26,11 +26,11 @@ cached = "0.44.*"
 secrecy = "0.8.*"
 symlink = "0.1.*"
 fs_extra = "1.3.*"
-octocrab = "0.28.*"
+octocrab = "0.29.*"
 crossbeam = "0.8.*"
 serde_derive = "1.0.*"
 jsonwebtoken = "8.3.*"
-tokio = { version = "1.29.*", features = ["full"] }
+tokio = { version = "1.32.*", features = ["full"] }
 chrono = { version = "0.4.*", default-features = false }
 clap = { version = "4.3.*", features = ["derive", "env"] }
 
