@@ -35,11 +35,8 @@ pub(crate) async fn call_followup_lifecycle_script<T: Debug>(
     let command_result =
         call_lifecycle_script(deploy_base_directory, lifecycle_event_name, state).await?;
 
-    if previous_result.is_err() {
-        Err(previous_result.unwrap_err())
-    } else {
-        Ok(command_result)
-    }
+    previous_result?;
+    Ok(command_result)
 }
 
 pub(crate) async fn call_and_aggregate_lifecycle_script(
