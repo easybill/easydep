@@ -26,21 +26,18 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: stable
           components: rustfmt, clippy
 
       - name: Run rustfmt
-        run: cargo fmt --check
+        uses: clechasseur/rs-fmt-check@v2
 
       - name: Run clippy
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+        uses: clechasseur/rs-clippy-check@v3
 
   build:
     permissions: read-all
@@ -60,14 +57,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          override: true
           toolchain: stable
-          target: ${{ matrix.platform.target }}
+          targets: ${{ matrix.platform.target }}
 
       - name: Initialize Rust caching
         uses: Swatinem/rust-cache@v2
@@ -75,7 +71,7 @@ jobs:
           key: ${{ matrix.platform.target }}
 
       - name: Compile Binary
-        uses: actions-rs/cargo@v1
+        uses: clechasseur/rs-cargo@v2
         with:
           command: build
           use-cross: true
