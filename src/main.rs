@@ -1,8 +1,18 @@
-pub(crate) mod cache;
-pub(crate) mod entity;
-pub(crate) mod handler;
-pub(crate) mod helper;
-pub(crate) mod http;
+use std::net::SocketAddr;
+use std::ops::Add;
+use std::time::{Duration, Instant};
+
+use axum::extract::Query;
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
+use axum::{middleware, routing, Extension, Router};
+use chrono::{TimeZone, Utc};
+use clap::Parser;
+use log::{debug, info};
+use tokio::net::TcpListener;
+use tokio::time::sleep;
+
+use entity::requests::{CancelRequest, InitRequest, PublishRequest};
 
 use crate::cache::DeploymentCache;
 use crate::entity::deployment::{DeploymentInformation, DeploymentState};
@@ -15,19 +25,12 @@ use crate::helper::logging_setup::setup_logging;
 use crate::helper::process_helper::{pretty_print_output, CommandResult};
 use crate::http::auth::handle_auth;
 use crate::http::error_handling::HandlerError;
-use axum::body::Body;
-use axum::extract::Query;
-use axum::http::StatusCode;
-use axum::response::IntoResponse;
-use axum::{middleware, routing, Extension, Router, Server};
-use chrono::{TimeZone, Utc};
-use clap::Parser;
-use entity::requests::{CancelRequest, InitRequest, PublishRequest};
-use log::{debug, info};
-use std::net::SocketAddr;
-use std::ops::Add;
-use std::time::{Duration, Instant};
-use tokio::time::sleep;
+
+pub(crate) mod cache;
+pub(crate) mod entity;
+pub(crate) mod handler;
+pub(crate) mod helper;
+pub(crate) mod http;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<(), anyhow::Error> {
@@ -44,7 +47,7 @@ async fn main() -> anyhow::Result<(), anyhow::Error> {
     let deploy_cache = DeploymentCache::new(cache_time_seconds);
 
     // build the http router
-    let routing: Router<(), Body> = Router::new()
+    let app = Router::new()
         .route("/deploy/start", routing::post(handle_deploy_start_request))
         .route(
             "/deploy/publish",
@@ -64,9 +67,9 @@ async fn main() -> anyhow::Result<(), anyhow::Error> {
         .parse::<SocketAddr>()
         .expect("Cannot parse provided bind host address");
     info!("HTTP server is listening on {}", address);
-    Server::bind(&address)
-        .serve(routing.into_make_service())
-        .await?;
+
+    let listener = TcpListener::bind(address).await?;
+    axum::serve(listener, app).await?;
 
     Ok(())
 }

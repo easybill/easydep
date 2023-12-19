@@ -1,13 +1,14 @@
 use crate::entity::options::Options;
-use axum::http::{Request, StatusCode};
+use axum::extract::Request;
+use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::Response;
 use axum::{http, Extension};
 
-pub(crate) async fn handle_auth<B>(
+pub(crate) async fn handle_auth(
     Extension(options): Extension<Options>,
-    request: Request<B>,
-    next: Next<B>,
+    request: Request,
+    next: Next,
 ) -> Result<Response, StatusCode> {
     let auth_header = request
         .headers()
