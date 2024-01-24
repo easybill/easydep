@@ -83,7 +83,7 @@ jobs:
           cp target/${{ matrix.platform.target }}/release/easydep artifact/easydep_${{ matrix.platform.osn }}_${{ matrix.platform.arch }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: artifact/easydep_${{ matrix.platform.osn }}_${{ matrix.platform.arch }}
           name: easydep_${{ matrix.platform.osn }}_${{ matrix.platform.arch }}
@@ -106,13 +106,13 @@ jobs:
         run: echo "TAG_NAME=1.$RUN.$(($ATTEMPT - 1))" >> $GITHUB_ENV;
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: binaries
 
       - name: Generate changelog
         id: changelog_generate
-        uses: mikepenz/release-changelog-builder-action@v3
+        uses: mikepenz/release-changelog-builder-action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
