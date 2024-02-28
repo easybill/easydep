@@ -19,7 +19,7 @@ pub(crate) async fn init_deployment(
 ) -> anyhow::Result<Vec<CommandResult>, anyhow::Error> {
     let deploy_base_dir = info.base_directory();
     let result = internal_init_deployment(options, info).await;
-    call_and_aggregate_lifecycle_script(&deploy_base_dir, "init", result).await
+    call_and_aggregate_lifecycle_script(options, &deploy_base_dir, "init", result).await
 }
 
 async fn internal_init_deployment(
@@ -162,11 +162,12 @@ async fn internal_init_deployment(
         "Executing deployment script in {:?} ({})",
         deploy_repo_dir, info.tag_name
     );
-    let deploy_script_path = deploy_repo_dir.join(".easydep").join("execute.sh");
+    let script_dir = format!(".easydep{}", options.environment_suffix());
+    let deploy_script_path = deploy_repo_dir.join(&script_dir).join("execute.sh");
     if deploy_script_path.exists() {
         let mut script_execute_command = Command::new("bash");
         script_execute_command
-            .arg(".easydep/execute.sh")
+            .arg(format!("{}/execute.sh", script_dir))
             .current_dir(deploy_repo_dir);
         command_results.push(run_command(script_execute_command).await?);
     }

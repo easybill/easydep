@@ -27,24 +27,32 @@ pub(crate) async fn read_latest_release(
     let installation = find_installation(&octocrab, options).await?;
     let app_scoped_octocrab = octocrab.installation(installation.id);
 
-    // list the last 10 releases and find the latest non-draft one
+    // list the last 100 releases and find the latest for the current env
     let repo_handler =
         app_scoped_octocrab.repos(&options.github_repo_org, &options.github_repo_name);
     let last_releases = repo_handler
         .releases()
         .list()
-        .per_page(10)
+        .per_page(100)
         .send()
         .await?
         .items;
-    let mut non_draft_releases: Vec<Release> = last_releases
+    let mut possible_releases: Vec<Release> = last_releases
         .into_iter()
-        .filter(|release| !release.prerelease && !release.draft)
+        .filter(|release| !release.draft)
+        .filter(|release| {
+            // pre-release + prod -> false
+            // pre-release + staging -> true
+            // release + prod -> true
+            // release + staging -> false
+            let prod = options.prod_environment();
+            release.prerelease != prod
+        })
         .collect();
 
     // sort the releases by id, descending
-    non_draft_releases.sort_by(|left, right| right.id.cmp(&left.id));
-    Ok(non_draft_releases.first().cloned())
+    possible_releases.sort_by(|left, right| right.id.cmp(&left.id));
+    Ok(possible_releases.first().cloned())
 }
 
 async fn authenticated_github_client(options: &Options) -> anyhow::Result<Octocrab, anyhow::Error> {

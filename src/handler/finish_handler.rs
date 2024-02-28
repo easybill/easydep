@@ -14,7 +14,7 @@ pub(crate) async fn finish_deployment(
     let deploy_base_dir = info.base_directory();
     let result = internal_finish_deployment(options, info).await;
     let finish_script_result =
-        call_followup_lifecycle_script(&deploy_base_dir, "publish", result).await;
+        call_followup_lifecycle_script(options, &deploy_base_dir, "publish", result).await;
 
     // cleanup (by removing the oldest release)
     info!("Published one release, trying to discord the oldest release");

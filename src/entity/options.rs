@@ -1,5 +1,6 @@
-use clap::Parser;
 use std::path::PathBuf;
+
+use clap::Parser;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Symlink {
@@ -61,6 +62,8 @@ pub(crate) struct Options {
         default_value = "REVISION"
     )]
     pub git_revision_file: String,
+    #[arg(long = "environment", env = "EASYDEP_ENV", default_value = "")]
+    pub environment: String,
     // parsed internally, not exposed
     #[arg(
         long = "symlinks",
@@ -84,5 +87,17 @@ impl Options {
                 }
             })
             .collect()
+    }
+
+    pub fn prod_environment(&self) -> bool {
+        self.environment.is_empty() || self.environment == "prod"
+    }
+
+    pub fn environment_suffix(&self) -> String {
+        if self.environment.is_empty() || self.environment == "prod" {
+            String::from("")
+        } else {
+            format!("-{}", self.environment.clone())
+        }
     }
 }
