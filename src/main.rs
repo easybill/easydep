@@ -136,7 +136,7 @@ async fn handle_deploy_start_request(
     deployment_information.set_state(DeploymentState::Publishable)?;
 
     // interpret the command execution result
-    let (joined_output, process_failed) = interpret_command_results(command_outputs);
+    let (joined_output, process_failed) = interpret_command_results(command_outputs.results);
     if process_failed {
         let full_response = format!(
             "At least one process did not exit successfully. See the log for more details!\n\n{}",

@@ -1,10 +1,12 @@
-use crate::helper::process_helper::StreamEntry::{Stderr, Stdout};
-use anyhow::anyhow;
 use std::io::{BufRead, BufReader, Read};
 use std::process::{Child, Command, ExitStatus, Stdio};
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
+
+use anyhow::anyhow;
 use tokio::task::JoinSet;
+
+use crate::helper::process_helper::StreamEntry::{Stderr, Stdout};
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum StreamEntry {
@@ -18,6 +20,12 @@ pub(crate) struct CommandResult {
     pub status: ExitStatus,
     pub command_line: String,
     pub stream_output: Vec<StreamEntry>,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct CommandResultCollection {
+    pub failed_command: bool,
+    pub results: Vec<CommandResult>,
 }
 
 pub(crate) fn pretty_print_output(output: &CommandResult) -> Vec<String> {

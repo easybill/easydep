@@ -1,22 +1,24 @@
-use crate::entity::deployment::DeploymentInformation;
-use crate::entity::options::Options;
-use crate::handler::call_and_aggregate_lifecycle_script;
-use crate::handler::github::read_installation_token;
-use crate::helper::process_helper::{run_command, CommandResult};
-use anyhow::anyhow;
-use fs_extra::dir::{copy, CopyOptions};
-use log::info;
-use secrecy::ExposeSecret;
 use std::fs;
 use std::fs::{create_dir_all, remove_dir_all};
 use std::path::Path;
 use std::process::Command;
+
+use anyhow::anyhow;
+use fs_extra::dir::{copy, CopyOptions};
+use log::info;
+use secrecy::ExposeSecret;
 use symlink::{remove_symlink_auto, symlink_auto};
+
+use crate::entity::deployment::DeploymentInformation;
+use crate::entity::options::Options;
+use crate::handler::github::read_installation_token;
+use crate::handler::{call_and_aggregate_command, call_and_aggregate_lifecycle_script};
+use crate::helper::process_helper::{CommandResult, CommandResultCollection};
 
 pub(crate) async fn init_deployment(
     options: &Options,
     info: &DeploymentInformation,
-) -> anyhow::Result<Vec<CommandResult>, anyhow::Error> {
+) -> anyhow::Result<CommandResultCollection, anyhow::Error> {
     let deploy_base_dir = info.base_directory();
     let result = internal_init_deployment(options, info).await;
     call_and_aggregate_lifecycle_script(options, &deploy_base_dir, "init", result).await
@@ -25,7 +27,7 @@ pub(crate) async fn init_deployment(
 async fn internal_init_deployment(
     options: &Options,
     info: &DeploymentInformation,
-) -> anyhow::Result<Vec<CommandResult>, anyhow::Error> {
+) -> anyhow::Result<CommandResultCollection, anyhow::Error> {
     let mut command_results = Vec::<CommandResult>::new();
 
     // read the installation token of the app and build the git fetch url from it
@@ -56,7 +58,15 @@ async fn internal_init_deployment(
             .arg("origin")
             .arg(fetch_url)
             .current_dir(&repository_directory);
-        command_results.push(run_command(git_remote_set_url_command).await?);
+
+        let command_success =
+            call_and_aggregate_command(git_remote_set_url_command, &mut command_results).await?;
+        if !command_success {
+            return Ok(CommandResultCollection {
+                failed_command: true,
+                results: command_results,
+            });
+        }
     } else {
         info!("Easydep base repo directory is missing, executing initial clone");
 
@@ -68,7 +78,15 @@ async fn internal_init_deployment(
             .arg(fetch_url)
             .arg(".easydep_base_repo")
             .current_dir(&options.base_directory);
-        command_results.push(run_command(git_clone_command).await?);
+
+        let command_success =
+            call_and_aggregate_command(git_clone_command, &mut command_results).await?;
+        if !command_success {
+            return Ok(CommandResultCollection {
+                failed_command: true,
+                results: command_results,
+            });
+        }
     }
 
     // check if the deployment is still in the expected state before continuing
@@ -94,7 +112,14 @@ async fn internal_init_deployment(
         .arg("--prune")
         .arg("--tags")
         .current_dir(&deploy_repo_dir);
-    command_results.push(run_command(git_fetch_command).await?);
+    let command_success =
+        call_and_aggregate_command(git_fetch_command, &mut command_results).await?;
+    if !command_success {
+        return Ok(CommandResultCollection {
+            failed_command: true,
+            results: command_results,
+        });
+    }
 
     // reset the directory to the target tag
     info!(
@@ -107,7 +132,14 @@ async fn internal_init_deployment(
         .arg("--hard")
         .arg(&info.tag_name)
         .current_dir(&deploy_repo_dir);
-    command_results.push(run_command(git_reset_command).await?);
+    let command_success =
+        call_and_aggregate_command(git_reset_command, &mut command_results).await?;
+    if !command_success {
+        return Ok(CommandResultCollection {
+            failed_command: true,
+            results: command_results,
+        });
+    }
 
     // write revision file if requested
     let revision_file_name = &options.git_revision_file;
@@ -169,8 +201,18 @@ async fn internal_init_deployment(
         script_execute_command
             .arg(format!("{}/execute.sh", script_dir))
             .current_dir(deploy_repo_dir);
-        command_results.push(run_command(script_execute_command).await?);
+        let command_success =
+            call_and_aggregate_command(script_execute_command, &mut command_results).await?;
+        if !command_success {
+            return Ok(CommandResultCollection {
+                failed_command: true,
+                results: command_results,
+            });
+        }
     }
 
-    Ok(command_results)
+    Ok(CommandResultCollection {
+        failed_command: false,
+        results: command_results,
+    })
 }

@@ -29,7 +29,7 @@ pub(crate) async fn handle_initial_start(options: &Options) -> anyhow::Result<()
 
             // execute the init & print out the result
             let init_result = init_deployment(options, &deploy_information).await?;
-            if interpret_and_print_command_results(init_result) {
+            if interpret_and_print_command_results(init_result.results) {
                 // failed, execute the cancel handler
                 cancel_deployment(&deploy_information).await?;
                 return Err(anyhow!("Init handler wasn't able to process the release!"));

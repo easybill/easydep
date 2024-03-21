@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use crate::entity::options::Options;
-use crate::helper::process_helper::{run_command, CommandResult};
+use crate::helper::process_helper::{run_command, CommandResult, CommandResultCollection};
 
 pub(crate) mod cancel_handler;
 pub(crate) mod finish_handler;
@@ -28,6 +28,16 @@ impl LifecycleState {
     }
 }
 
+pub(crate) async fn call_and_aggregate_command(
+    command: Command,
+    results: &mut Vec<CommandResult>,
+) -> anyhow::Result<bool> {
+    let command_result = run_command(command).await?;
+    let exit_status = command_result.status;
+    results.push(command_result);
+    Ok(exit_status.success())
+}
+
 pub(crate) async fn call_followup_lifecycle_script<T: Debug>(
     options: &Options,
     deploy_base_directory: &PathBuf,
@@ -46,9 +56,18 @@ pub(crate) async fn call_and_aggregate_lifecycle_script(
     options: &Options,
     deploy_base_directory: &PathBuf,
     lifecycle_event_name: &str,
-    previous_result: Result<Vec<CommandResult>, anyhow::Error>,
-) -> anyhow::Result<Vec<CommandResult>, anyhow::Error> {
-    let state = LifecycleState::from_result(&previous_result);
+    previous_result: Result<CommandResultCollection, anyhow::Error>,
+) -> anyhow::Result<CommandResultCollection, anyhow::Error> {
+    let state = match &previous_result {
+        Ok(result) => {
+            if result.failed_command {
+                LifecycleState::Failure
+            } else {
+                LifecycleState::Success
+            }
+        }
+        Err(_) => LifecycleState::Failure,
+    };
     let command_result =
         call_lifecycle_script(options, deploy_base_directory, lifecycle_event_name, state).await?;
 
@@ -59,12 +78,18 @@ pub(crate) async fn call_and_aggregate_lifecycle_script(
     }
 
     // get the output vec from the previous input & aggregate it with the new command output
-    let mut results = previous_result.unwrap();
-    if let Some(result) = command_result {
-        results.push(result);
+    let mut result_collection = previous_result.unwrap();
+    match command_result {
+        Some(result) => {
+            let success = result.status.success();
+            result_collection.results.push(result);
+            Ok(CommandResultCollection {
+                results: result_collection.results,
+                failed_command: result_collection.failed_command || !success,
+            })
+        }
+        None => Ok(result_collection),
     }
-
-    Ok(results)
 }
 
 pub(crate) async fn call_lifecycle_script(
