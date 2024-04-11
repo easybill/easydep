@@ -3,7 +3,7 @@ use std::process::{Child, Command, ExitStatus, Stdio};
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use tokio::task::JoinSet;
 
 use crate::helper::process_helper::StreamEntry::{Stderr, Stdout};
@@ -68,7 +68,7 @@ pub(crate) async fn run_command(
 
     // spawn and run the process
     let full_command_line = format!("{:?}", &command);
-    let process = command.spawn().unwrap();
+    let process = command.spawn()?;
     wait_for_process(process, full_command_line).await
 }
 
@@ -83,12 +83,18 @@ async fn wait_for_process(
 
     // read the full stdout
     let stdout_sender = sender.clone();
-    let stdout = process.stdout.take().expect("Unable to get process stdout");
+    let stdout = process
+        .stdout
+        .take()
+        .context("Unable to get process stdout")?;
     read_stream_output(stdout, stdout_sender, &mut join_set, Stdout);
 
     // read the full stderr
     let stderr_sender = sender.clone();
-    let stderr = process.stderr.take().expect("Unable to get process stderr");
+    let stderr = process
+        .stderr
+        .take()
+        .context("Unable to get process stderr")?;
     read_stream_output(stderr, stderr_sender, &mut join_set, Stderr);
 
     // spawn the thread that receives the lines
@@ -100,9 +106,9 @@ async fn wait_for_process(
                 break;
             }
 
-            let mut guard = entry_target.lock().expect("Could not acquire mutex guard");
-            guard.push(entry);
-            drop(guard);
+            if let Ok(mut guard) = entry_target.lock() {
+                guard.push(entry);
+            }
         }
     });
 
@@ -111,7 +117,7 @@ async fn wait_for_process(
     let process_exit_code = process.wait()?;
     exit_sender
         .send(StreamEntry::Exit)
-        .expect("Unable to notify about process exit");
+        .context("Unable to notify about process exit")?;
 
     // wait for all futures to complete
     while join_set.join_next().await.is_some() {}
@@ -138,11 +144,10 @@ fn read_stream_output<R: Read + Send + 'static, F: Fn(String) -> StreamEntry + S
 ) {
     tracker.spawn(async move {
         let stream_reader = BufReader::new(stream);
-        for line in stream_reader.lines() {
-            let line = line.expect("Unable to unwrap line from stream input");
-            target
-                .send(line_factory(line))
-                .expect("Unable to transfer line to stream target");
+        for line in stream_reader.lines().map_while(Result::ok) {
+            if target.send(line_factory(line)).is_err() {
+                break;
+            };
         }
     });
 }
