@@ -1,0 +1,33 @@
+[package]
+name = "easydep-server"
+version = { workspace = true }
+
+edition = { workspace = true }
+rust-version = { workspace = true }
+
+authors = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+
+[dependencies]
+clap = { workspace = true }
+toml = { workspace = true }
+serde = { workspace = true }
+anyhow = { workspace = true }
+tokio = { workspace = true }
+prost = { workspace = true }
+symlink = { workspace = true }
+secrecy = { workspace = true }
+octocrab = { workspace = true }
+tokio-stream = { workspace = true }
+jsonwebtoken = { workspace = true }
+
+log = { workspace = true }
+env_logger = { workspace = true }
+
+tonic = { workspace = true }
+tonic-types = { workspace = true }
+
+
+[build-dependencies]
+tonic-build = { workspace = true }

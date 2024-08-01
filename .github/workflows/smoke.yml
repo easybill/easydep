@@ -1,0 +1,32 @@
+name: Smoke Build
+on:
+  push:
+    tags-ignore: [ "**" ]
+    branches-ignore: [ "main" ]
+  pull_request:
+
+concurrency:
+  cancel-in-progress: true
+  group: smoke-${{ github.event.pull_request.number || github.ref }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Smoke Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Setup Protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compile Binary
+        uses: clechasseur/rs-cargo@v2
+        with:
+          command: build
+          args: --locked --release

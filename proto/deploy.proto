@@ -1,0 +1,99 @@
+// This file is part of easydep, licensed under the MIT License (MIT).
+//
+// Copyright (c) 2024 easybill GmbH
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+syntax = "proto3";
+package easydep;
+
+import "action.proto";
+
+// A request to start the deployment of the given release.
+message DeployStartRequest {
+  // The profile to use for the deployment. The requested profile must be
+  // configured on the server. If the profile does not exist, the deployment
+  // request will be rejected.
+  string profile = 1;
+  // The id of the release that should be deployed.
+  uint64 release_id = 2;
+}
+
+// A request to publish a previously started deployment process.
+message DeployPublishRequest {
+  // The id of the release that should be published. A previous
+  // request must have started the deployment for the given release.
+  uint64 release_id = 1;
+}
+
+// A request to rollback to the previous deployment.
+message DeployRollbackRequest {
+  // The profile of which the last deployment should be used.
+  string profile = 1;
+}
+
+// A request to rollback a previously prepared deployment.
+message DeployDeleteRequest {
+  // The id of the release that should be rolled back. The release is
+  // not allowed to be published yet.
+  uint64 release_id = 1;
+}
+
+// A request to get the deployment status for the given profile.
+message DeployStatusRequest {
+  // The name of the profile to get the deployment status of.
+  string profile = 1;
+}
+
+// A response to a status request containing information about the
+// latest release that was published for a profile.
+message DeployStatusResponse {
+  // The name of the requested profile.
+  string profile = 1;
+  // The id of the current published release.
+  uint64 release_id = 2;
+  // The name of the tag from which the release was created.
+  string tag_name = 3;
+  // The target commit (or branch) from which the release was created.
+  string target_commit = 4;
+}
+
+// Deployment service definition running on the server.
+service DeploymentService {
+  // Requests the execution of a deployment on the server side. Starting a
+  // deployment will result in all steps necessary to prepare the publish of a
+  // new release, but will not actually publish the release. The publish process
+  // must get started separately.
+  rpc StartDeployment(DeployStartRequest) returns (stream ExecutedActionEntry);
+
+  // Requests the execution of publishing the given release. A previous request
+  // must have been made to start the deployment process within the last 15
+  // minutes.
+  rpc PublishDeployment(DeployPublishRequest) returns (stream ExecutedActionEntry);
+
+  // Requests the rollback of a deployment that was attempted but shouldn't be
+  // published.
+  rpc RollbackDeployment(DeployRollbackRequest) returns (stream ExecutedActionEntry);
+
+  // Requests the deletion of a deployment that was initialized but not yet published.
+  rpc DeleteUnpublishedDeployment(DeployDeleteRequest) returns (stream ExecutedActionEntry);
+
+  // Get the deployment status for the given profile.
+  rpc GetDeploymentStatus(DeployStatusRequest) returns (DeployStatusResponse);
+}

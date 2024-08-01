@@ -1,0 +1,60 @@
+// This file is part of easydep, licensed under the MIT License (MIT).
+//
+// Copyright (c) 2024 easybill GmbH
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+syntax = "proto3";
+package easydep;
+
+// Represents the current actions that a deployment service can be in.
+enum DeployCurrentAction {
+  // The service is idling and not doing anything.
+  IDLE = 0;
+  // The service is currently deploying a fresh release.
+  DEPLOYING = 1;
+  // The service is currently rolling back from the current to a previous release.
+  ROLLING_BACK = 2;
+}
+
+// A request to get status information from the remote server.
+message StatusRequest {
+}
+
+// A response to a status information request.
+message StatusResponse {
+  // The version that the server is running.
+  string version = 1;
+  // The action that is currently being executed.
+  DeployCurrentAction current_action = 2;
+  // The id of the release that is currently being processed
+  // unless the worker is currently idling.
+  optional uint64 release_id = 3;
+  // The tag of the release that is currently being processed
+  // unless the worker is currently idling.
+  optional string release_tag = 4;
+  // The deployment configurations that are loaded on the server.
+  repeated string deployment_configurations = 5;
+}
+
+// A service to get status information from a server.
+service StatusService {
+  // Get the status information of the target server.
+  rpc GetStatus(StatusRequest) returns (StatusResponse);
+}

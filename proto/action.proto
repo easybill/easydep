@@ -1,0 +1,67 @@
+// This file is part of easydep, licensed under the MIT License (MIT).
+//
+// Copyright (c) 2024 easybill GmbH
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+syntax = "proto3";
+package easydep;
+
+import "common.proto";
+
+// The action that is currently being executed.
+enum Action {
+  // The git clone process
+  GIT_CLONE = 0;
+  // The creation of a symlink
+  SYMLINK_CREATE = 1;
+  // The script called to initially setup the deploy process
+  INIT_SCRIPT = 2;
+  // The script called to finish the deployment process
+  FINISH_SCRIPT = 3;
+  // The script called when the deployment gets rolled back
+  DELETE_SCRIPT = 4;
+}
+
+// The executing status of the current action.
+enum ActionStatus {
+  // The action just started executing.
+  STARTED = 0;
+  // The action is currently running.
+  RUNNING = 1;
+  // The action completed successfully.
+  COMPLETED_SUCCESS = 2;
+  // The action completed with an error.
+  COMPLETED_FAILURE = 3;
+}
+
+// An information around an information entry being produced when executing
+// an action during the deployment process.
+message ExecutedActionEntry {
+  // The id of the release (provided in request)
+  uint64 release_id = 1;
+  // The current action that is being executed (f. ex. the current command)
+  Action current_action = 2;
+  // The status of the action that is being executed
+  ActionStatus action_status = 3;
+  // An optional log entry that is associated with the current action step.
+  // Might not be given if the message is only used as a marker to indicate that
+  // an action was started or finished.
+  optional LogEntry action_log_entry = 4;
+}

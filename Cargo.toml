@@ -1,0 +1,45 @@
+[workspace]
+resolver = "2"
+members = [
+  "easydep-client",
+  "easydep-server",
+]
+
+[workspace.package]
+version = "0.1.0"
+
+edition = "2021"
+rust-version = "1.80.0"
+
+publish = false
+authors = ["Pasqual Koschmieder"]
+
+license = "MIT"
+license-file = "LICENSE"
+repository = "https://github.com/easybill/easydep"
+
+[workspace.dependencies]
+toml = "0.8.*"
+anyhow = "1.*"
+prost = "0.13.*"
+symlink = "0.1.*"
+secrecy = "0.8.*"
+futures = "0.3.*"
+octocrab = "0.39.*"
+jsonwebtoken = "9.3.*"
+serde = { version = "1.*", features = ["derive"] }
+tokio = { version = "1.39.*", features = ["full"] }
+clap = { version = "4.5.*", features = ["derive", "env"] }
+tokio-stream = { version = "0.1.*", default-features = false, features = ["io-util", "fs"] }
+
+log = "0.4.*"
+env_logger = "0.11.*"
+
+tonic = "0.12.*"
+tonic-types = "0.12.*"
+tonic-build = "0.12.*"
+
+[profile.release-with-debug]
+debug = true
+inherits = "release"
+split-debuginfo = "packed"

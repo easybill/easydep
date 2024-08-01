@@ -1,0 +1,106 @@
+name: Build
+on:
+  push:
+    branches: [ "main" ]
+    tags-ignore: [ "**" ]
+  workflow_dispatch:
+    inputs:
+      releasing:
+        description: "Release build"
+        type: boolean
+        default: false
+      version:
+        description: "Version string, e.g. 2.3.1:"
+        required: true
+
+concurrency:
+  cancel-in-progress: false
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform.target }} / ${{ matrix.platform.os }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          # mac target
+          - { os: "macos-latest", target: "x86_64-apple-darwin", osn: "mac", arch: "x86_64", ext: "" }
+          - { os: "macos-latest", target: "aarch64-apple-darwin", osn: "mac", arch: "aarch64", ext: "" }
+          # windows target
+          - { os: "windows-latest", target: "x86_64-pc-windows-msvc", osn: "windows", arch: "x86_64", ext: ".exe" }
+          - { os: "windows-latest", target: "aarch64-pc-windows-msvc", osn: "windows", arch: "aarch64", ext: ".exe" }
+          # linux target
+          - { os: "ubuntu-latest", target: "x86_64-unknown-linux-musl", osn: "linux", arch: "x86_64", ext: "" }
+          - { os: "ubuntu-latest", target: "aarch64-unknown-linux-musl", osn: "linux", arch: "aarch64", ext: "" }
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install linux build toolchain
+        if: contains(matrix.platform.os, 'ubuntu')
+        run: |
+          sudo apt update
+          sudo apt-get install -y musl-dev musl-tools musl gcc-aarch64-linux-gnu llvm clang qemu-user
+      # https://github.com/briansmith/ring/issues/1414
+      - name: Set required Environment Variables
+        if: contains(matrix.platform.target, 'linux') && contains(matrix.platform.target, 'aarch64')
+        run: |
+          echo "TARGET_AR=aarch64-linux-gnu-ar" >> $GITHUB_ENV
+          echo "TARGET_CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUNNER=qemu-aarch64 -L /usr/aarch64-linux-gnu" >> $GITHUB_ENV
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS=-Clink-self-contained=yes -Clinker=rust-lld" >> $GITHUB_ENV
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform.target }}
+      - name: Setup Protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compile Binary
+        uses: clechasseur/rs-cargo@v2
+        with:
+          command: build
+          args: --locked --release --target ${{ matrix.platform.target }}
+      - name: Renamed and Copy Binaries
+        shell: bash
+        run: |
+          mkdir -p binaries
+          mv target/*/release/easydep-server${{ matrix.platform.ext }} binaries/easydep-server-${{ matrix.platform.osn }}-${{ matrix.platform.arch }}${{ matrix.platform.ext }}
+          mv target/*/release/easydep-client${{ matrix.platform.ext }} binaries/easydep-client-${{ matrix.platform.osn }}-${{ matrix.platform.arch }}${{ matrix.platform.ext }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: easydep_${{ matrix.platform.osn }}_${{ matrix.platform.arch }}
+          retention-days: 1
+          path: |
+            binaries/easydep-server-${{ matrix.platform.osn }}-${{ matrix.platform.arch }}${{ matrix.platform.ext }}
+            binaries/easydep-client-${{ matrix.platform.osn }}-${{ matrix.platform.arch }}${{ matrix.platform.ext }}
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event.inputs.version != '' && github.event.inputs.releasing == 'true'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: binaries
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          make_latest: true
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            binaries/*/*
