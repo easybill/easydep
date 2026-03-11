@@ -63,7 +63,7 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Compile Binary
-        uses: clechasseur/rs-cargo@v2
+        uses: clechasseur/rs-cargo@v4
         with:
           command: build
           args: --locked --release --target ${{ matrix.platform.target }}
