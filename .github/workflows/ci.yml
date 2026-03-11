@@ -74,7 +74,7 @@ jobs:
           mv target/*/release/easydep-server${{ matrix.platform.ext }} binaries/easydep-server-${{ matrix.platform.osn }}-${{ matrix.platform.arch }}${{ matrix.platform.ext }}
           mv target/*/release/easydep-client${{ matrix.platform.ext }} binaries/easydep-client-${{ matrix.platform.osn }}-${{ matrix.platform.arch }}${{ matrix.platform.ext }}
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: easydep_${{ matrix.platform.osn }}_${{ matrix.platform.arch }}
           retention-days: 1
