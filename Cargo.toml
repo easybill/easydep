@@ -21,7 +21,7 @@ repository = "https://github.com/easybill/easydep"
 [workspace.dependencies]
 toml = "0.8.*"
 anyhow = "1.*"
-prost = "0.13.*"
+prost = "0.14.*"
 symlink = "0.1.*"
 secrecy = "0.8.*"
 futures = "0.3.*"
