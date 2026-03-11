@@ -78,7 +78,7 @@ impl GitHubAccessor {
         deploy_config: &DeploymentConfiguration,
     ) -> anyhow::Result<Release> {
         let installation = self.find_installation(deploy_config).await?;
-        let app_scoped_client = self.github_client.installation(installation.id);
+        let app_scoped_client = self.github_client.installation(installation.id)?;
         let release = app_scoped_client
             .repos(
                 &deploy_config.source_repo_owner,

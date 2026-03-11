@@ -26,8 +26,7 @@ log = { workspace = true }
 env_logger = { workspace = true }
 
 tonic = { workspace = true }
-tonic-types = { workspace = true }
-
+tonic-prost = { workspace = true }
 
 [build-dependencies]
-tonic-build = { workspace = true }
+tonic-prost-build = { workspace = true }
