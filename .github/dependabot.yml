@@ -4,13 +4,13 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
-      day: "friday"
+      day: "monday"
       time: "06:00"
       timezone: "Europe/Berlin"
   - package-ecosystem: cargo
     directory: /
     schedule:
       interval: "weekly"
-      day: "friday"
+      day: "monday"
       time: "06:00"
       timezone: "Europe/Berlin"
