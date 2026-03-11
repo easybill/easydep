@@ -127,3 +127,159 @@ impl DeploymentAccessor {
         Ok(release_directories)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use super::*;
+
+    fn make_config(base_dir: &str) -> Configuration {
+        Configuration {
+            bind_host: "127.0.0.1:9090".to_string(),
+            base_directory: base_dir.to_string(),
+            github_app_id: 12345,
+            github_app_pem_key_path: "/path/to/key.pem".to_string(),
+            retained_releases: 5,
+            deployment_configs: vec![],
+        }
+    }
+
+    fn make_profile(target: &str) -> DeploymentConfiguration {
+        DeploymentConfiguration {
+            id: "test".to_string(),
+            target: target.to_string(),
+            extend_only: false,
+            source_repo_owner: "test".to_string(),
+            source_repo_name: "test".to_string(),
+            allowed_repo_branches: vec![],
+            denied_repo_branches: vec![],
+            revision_file_name: None,
+            extended_script_configurations: vec![],
+            symlinks: vec![],
+        }
+    }
+
+    #[test]
+    fn test_get_current_release_directory() {
+        let config = make_config("/opt/deploy");
+        let accessor = DeploymentAccessor::new(&config);
+        let profile = make_profile("webapp");
+        assert_eq!(
+            accessor.get_current_release_directory(&profile),
+            PathBuf::from("/opt/deploy/current-webapp")
+        );
+    }
+
+    #[test]
+    fn test_get_releases_directory() {
+        let config = make_config("/opt/deploy");
+        let accessor = DeploymentAccessor::new(&config);
+        let profile = make_profile("webapp");
+        assert_eq!(
+            accessor.get_releases_directory(&profile),
+            PathBuf::from("/opt/deploy/releases/webapp")
+        );
+    }
+
+    #[test]
+    fn test_get_release_directory() {
+        let config = make_config("/opt/deploy");
+        let accessor = DeploymentAccessor::new(&config);
+        let profile = make_profile("webapp");
+        assert_eq!(
+            accessor.get_release_directory(&profile, &42),
+            PathBuf::from("/opt/deploy/releases/webapp/42")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_get_release_directories_sorted_descending() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = make_config(dir.path().to_str().unwrap());
+        let accessor = DeploymentAccessor::new(&config);
+        let profile = make_profile("webapp");
+
+        let releases_dir = dir.path().join("releases").join("webapp");
+        fs::create_dir_all(&releases_dir).unwrap();
+        fs::create_dir(releases_dir.join("100")).unwrap();
+        fs::create_dir(releases_dir.join("200")).unwrap();
+        fs::create_dir(releases_dir.join("50")).unwrap();
+
+        let result = accessor
+            .get_release_directories_for_profile(&profile)
+            .await
+            .unwrap();
+        let ids: Vec<u64> = result.iter().map(|(_, id)| *id).collect();
+        assert_eq!(ids, vec![200, 100, 50]);
+    }
+
+    #[tokio::test]
+    async fn test_get_release_directories_ignores_non_numeric() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = make_config(dir.path().to_str().unwrap());
+        let accessor = DeploymentAccessor::new(&config);
+        let profile = make_profile("webapp");
+
+        let releases_dir = dir.path().join("releases").join("webapp");
+        fs::create_dir_all(&releases_dir).unwrap();
+        fs::create_dir(releases_dir.join("100")).unwrap();
+        fs::create_dir(releases_dir.join("not-a-number")).unwrap();
+        fs::create_dir(releases_dir.join("abc")).unwrap();
+
+        let result = accessor
+            .get_release_directories_for_profile(&profile)
+            .await
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].1, 100);
+    }
+
+    #[tokio::test]
+    async fn test_get_release_directories_ignores_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = make_config(dir.path().to_str().unwrap());
+        let accessor = DeploymentAccessor::new(&config);
+        let profile = make_profile("webapp");
+
+        let releases_dir = dir.path().join("releases").join("webapp");
+        fs::create_dir_all(&releases_dir).unwrap();
+        fs::create_dir(releases_dir.join("100")).unwrap();
+        fs::write(releases_dir.join("200"), "not a directory").unwrap();
+
+        let result = accessor
+            .get_release_directories_for_profile(&profile)
+            .await
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].1, 100);
+    }
+
+    #[tokio::test]
+    async fn test_get_release_directories_empty() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = make_config(dir.path().to_str().unwrap());
+        let accessor = DeploymentAccessor::new(&config);
+        let profile = make_profile("webapp");
+
+        let releases_dir = dir.path().join("releases").join("webapp");
+        fs::create_dir_all(&releases_dir).unwrap();
+
+        let result = accessor
+            .get_release_directories_for_profile(&profile)
+            .await
+            .unwrap();
+        assert!(result.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_get_release_directories_missing_dir_returns_error() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = make_config(dir.path().to_str().unwrap());
+        let accessor = DeploymentAccessor::new(&config);
+        let profile = make_profile("webapp");
+
+        let result = accessor.get_release_directories_for_profile(&profile).await;
+        assert!(result.is_err());
+    }
+}

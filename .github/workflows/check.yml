@@ -54,3 +54,29 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Cargo clippy
         uses: clechasseur/rs-clippy-check@v5
+
+  test:
+    runs-on: ubuntu-latest
+    name: ${{ matrix.toolchain }} / test
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: [ "stable", "nightly" ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Setup toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+      - name: Setup Protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cargo test
+        uses: clechasseur/rs-cargo@v4
+        with:
+          command: test
+          args: --locked

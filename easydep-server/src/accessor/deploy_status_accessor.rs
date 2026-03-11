@@ -82,3 +82,113 @@ impl DeployStatusAccessor {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_new_starts_in_preparing() {
+        let accessor = DeployStatusAccessor::new();
+        let state = accessor.inner.read().await;
+        assert_eq!(*state, DeployExecutionState::Preparing);
+    }
+
+    #[tokio::test]
+    async fn test_set_state() {
+        let accessor = DeployStatusAccessor::new();
+        accessor.set_state(DeployExecutionState::Published).await;
+        let state = accessor.inner.read().await;
+        assert_eq!(*state, DeployExecutionState::Published);
+    }
+
+    #[tokio::test]
+    async fn test_compare_and_set_succeeds_on_match() {
+        let accessor = DeployStatusAccessor::new();
+        let result = accessor
+            .compare_and_set_state(
+                &DeployExecutionState::Preparing,
+                DeployExecutionState::Prepared,
+            )
+            .await;
+        assert!(result);
+        let state = accessor.inner.read().await;
+        assert_eq!(*state, DeployExecutionState::Prepared);
+    }
+
+    #[tokio::test]
+    async fn test_compare_and_set_fails_on_mismatch() {
+        let accessor = DeployStatusAccessor::new();
+        let result = accessor
+            .compare_and_set_state(
+                &DeployExecutionState::Published,
+                DeployExecutionState::Deleted,
+            )
+            .await;
+        assert!(!result);
+        let state = accessor.inner.read().await;
+        assert_eq!(*state, DeployExecutionState::Preparing);
+    }
+
+    #[tokio::test]
+    async fn test_full_lifecycle_to_published() {
+        let accessor = DeployStatusAccessor::new();
+        assert!(
+            accessor
+                .compare_and_set_state(
+                    &DeployExecutionState::Preparing,
+                    DeployExecutionState::Prepared,
+                )
+                .await
+        );
+        assert!(
+            accessor
+                .compare_and_set_state(
+                    &DeployExecutionState::Prepared,
+                    DeployExecutionState::Publishing,
+                )
+                .await
+        );
+        assert!(
+            accessor
+                .compare_and_set_state(
+                    &DeployExecutionState::Publishing,
+                    DeployExecutionState::Published,
+                )
+                .await
+        );
+        let state = accessor.inner.read().await;
+        assert_eq!(*state, DeployExecutionState::Published);
+    }
+
+    #[tokio::test]
+    async fn test_full_lifecycle_to_deleted() {
+        let accessor = DeployStatusAccessor::new();
+        assert!(
+            accessor
+                .compare_and_set_state(
+                    &DeployExecutionState::Preparing,
+                    DeployExecutionState::Prepared,
+                )
+                .await
+        );
+        assert!(
+            accessor
+                .compare_and_set_state(
+                    &DeployExecutionState::Prepared,
+                    DeployExecutionState::Deleting,
+                )
+                .await
+        );
+        assert!(
+            accessor
+                .compare_and_set_state(
+                    &DeployExecutionState::Deleting,
+                    DeployExecutionState::Deleted,
+                )
+                .await
+        );
+        let state = accessor.inner.read().await;
+        assert_eq!(*state, DeployExecutionState::Deleted);
+    }
+}
