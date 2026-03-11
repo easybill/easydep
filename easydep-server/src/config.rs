@@ -47,7 +47,7 @@ pub(crate) struct Configuration {
     /// The deployment configurations that are defined. Each
     /// map key is the name of the configuration, mapped to
     /// the associated configuration.
-    deployment_configs: Vec<DeploymentConfiguration>,
+    pub(crate) deployment_configs: Vec<DeploymentConfiguration>,
 }
 
 /// The configuration for each deployment configuration.
@@ -85,7 +85,7 @@ pub(crate) struct DeploymentConfiguration {
     /// The extended configuration is executed first.
     pub extended_script_configurations: Vec<String>,
     /// The symlinks that should be created as part of this configuration.
-    symlinks: Vec<String>,
+    pub(crate) symlinks: Vec<String>,
 }
 
 /// Represents a symlink that can be provided to a deployment configuration.

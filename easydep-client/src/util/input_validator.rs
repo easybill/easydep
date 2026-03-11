@@ -44,3 +44,39 @@ pub(crate) fn validate_grpc_endpoint_uri(address: &String) -> anyhow::Result<Uri
         Err(err) => bail!("invalid uri provided {}: {}", address, err),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_valid_http_uri() {
+        let result = validate_grpc_endpoint_uri(&"http://localhost:9090".to_string());
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_valid_https_uri() {
+        let result = validate_grpc_endpoint_uri(&"https://example.com:443".to_string());
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_missing_scheme_rejected() {
+        let result = validate_grpc_endpoint_uri(&"//localhost:9090".to_string());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_missing_host_rejected() {
+        let result = validate_grpc_endpoint_uri(&"/just/a/path".to_string());
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("host"));
+    }
+
+    #[test]
+    fn test_scheme_only_rejected() {
+        let result = validate_grpc_endpoint_uri(&"http://".to_string());
+        assert!(result.is_err());
+    }
+}

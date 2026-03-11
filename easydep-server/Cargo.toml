@@ -28,5 +28,10 @@ env_logger = { workspace = true }
 tonic = { workspace = true }
 tonic-prost = { workspace = true }
 
+[dev-dependencies]
+tempfile = { workspace = true }
+serde_json = { workspace = true }
+tokio-stream = { workspace = true, features = ["net"] }
+
 [build-dependencies]
 tonic-prost-build = { workspace = true }

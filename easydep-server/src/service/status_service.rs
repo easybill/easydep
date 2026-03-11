@@ -81,3 +81,72 @@ impl StatusService for StatusServiceImpl {
         Ok(Response::new(response))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use tokio::net::TcpListener;
+    use tokio_stream::wrappers::TcpListenerStream;
+    use tonic::transport::{Channel, Server};
+
+    use super::*;
+    use crate::easydep::{
+        status_service_client::StatusServiceClient, status_service_server::StatusServiceServer,
+        StatusRequest,
+    };
+
+    async fn start_test_server(version: String, configs: Vec<String>) -> String {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let url = format!("http://{}", addr);
+
+        let deploy_status_accessor = DeploymentStatusAccessor::new();
+        let service = StatusServiceImpl::new(version, configs, deploy_status_accessor);
+        let incoming = TcpListenerStream::new(listener);
+
+        tokio::spawn(async move {
+            Server::builder()
+                .add_service(StatusServiceServer::new(service))
+                .serve_with_incoming(incoming)
+                .await
+                .unwrap();
+        });
+
+        url
+    }
+
+    #[tokio::test]
+    async fn test_get_status_idle() {
+        let url = start_test_server("1.0.0+abc".to_string(), vec![]).await;
+        let channel = Channel::from_shared(url).unwrap().connect().await.unwrap();
+        let mut client = StatusServiceClient::new(channel);
+
+        let response = client
+            .get_status(Request::new(StatusRequest {}))
+            .await
+            .unwrap()
+            .into_inner();
+
+        assert_eq!(response.version, "1.0.0+abc");
+        assert_eq!(response.current_action, DeployCurrentAction::Idle as i32);
+        assert!(response.release_id.is_none());
+        assert!(response.release_tag.is_none());
+        assert!(response.deployment_configurations.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_get_status_with_configs() {
+        let configs = vec!["webapp".to_string(), "api".to_string()];
+        let url = start_test_server("2.0.0+def".to_string(), configs).await;
+        let channel = Channel::from_shared(url).unwrap().connect().await.unwrap();
+        let mut client = StatusServiceClient::new(channel);
+
+        let response = client
+            .get_status(Request::new(StatusRequest {}))
+            .await
+            .unwrap()
+            .into_inner();
+
+        assert_eq!(response.version, "2.0.0+def");
+        assert_eq!(response.deployment_configurations, vec!["webapp", "api"]);
+    }
+}

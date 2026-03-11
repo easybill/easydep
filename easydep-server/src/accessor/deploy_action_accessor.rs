@@ -86,3 +86,78 @@ impl DeploymentStatusAccessor {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Note: We use JSON deserialization here because octocrab's Author struct
+    // is #[non_exhaustive], preventing direct struct construction from outside the crate.
+    fn make_test_release() -> Release {
+        serde_json::from_value(serde_json::json!({
+            "url": "https://api.github.com/repos/test/test/releases/1",
+            "html_url": "https://github.com/test/test/releases/tag/v1",
+            "assets_url": "https://api.github.com/repos/test/test/releases/1/assets",
+            "upload_url": "",
+            "id": 1,
+            "node_id": "R_1",
+            "tag_name": "v1.0.0",
+            "target_commitish": "main",
+            "draft": false,
+            "prerelease": false,
+            "assets": []
+        }))
+        .expect("failed to construct test release")
+    }
+
+    #[tokio::test]
+    async fn test_new_starts_idle() {
+        let accessor = DeploymentStatusAccessor::new();
+        assert!(matches!(accessor.get_action().await, CurrentAction::Idle));
+    }
+
+    #[tokio::test]
+    async fn test_set_and_get_action() {
+        let accessor = DeploymentStatusAccessor::new();
+        let release = make_test_release();
+        accessor
+            .set_action(CurrentAction::RollingBack(Box::new(release)))
+            .await;
+        assert!(matches!(
+            accessor.get_action().await,
+            CurrentAction::RollingBack(_)
+        ));
+    }
+
+    #[tokio::test]
+    async fn test_compare_and_set_succeeds_on_matching_variant() {
+        let accessor = DeploymentStatusAccessor::new();
+        let release = make_test_release();
+        let result = accessor
+            .compare_and_set_action_by_variant(
+                &CurrentAction::Idle,
+                CurrentAction::RollingBack(Box::new(release)),
+            )
+            .await;
+        assert!(result);
+        assert!(matches!(
+            accessor.get_action().await,
+            CurrentAction::RollingBack(_)
+        ));
+    }
+
+    #[tokio::test]
+    async fn test_compare_and_set_fails_on_mismatched_variant() {
+        let accessor = DeploymentStatusAccessor::new();
+        let release1 = make_test_release();
+        let release2 = make_test_release();
+        let result = accessor
+            .compare_and_set_action_by_variant(
+                &CurrentAction::RollingBack(Box::new(release1)),
+                CurrentAction::RollingBack(Box::new(release2)),
+            )
+            .await;
+        assert!(!result);
+        assert!(matches!(accessor.get_action().await, CurrentAction::Idle));
+    }
+}
