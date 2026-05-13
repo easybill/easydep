@@ -98,3 +98,61 @@ impl DeploymentInformation {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::entity::options::make_test_options;
+
+    fn make_info(base_directory: &str, release_id: u64) -> DeploymentInformation {
+        let options = make_test_options(base_directory, "");
+        DeploymentInformation::new("v1.0.0".to_string(), release_id, &options)
+    }
+
+    #[test]
+    fn base_directory_builds_releases_path() {
+        let info = make_info("/var/deploy", 42);
+        assert_eq!(
+            info.base_directory(),
+            PathBuf::from("/var/deploy/releases/42")
+        );
+    }
+
+    #[test]
+    fn initial_state_is_init() {
+        let info = make_info("", 1);
+        assert_eq!(info.read_state().unwrap(), DeploymentState::Init);
+    }
+
+    #[test]
+    fn set_state_then_read_state_roundtrip() {
+        let info = make_info("", 1);
+        info.set_state(DeploymentState::Publishable).unwrap();
+        assert_eq!(info.read_state().unwrap(), DeploymentState::Publishable);
+    }
+
+    #[test]
+    fn switch_to_requested_state_without_request_is_ok_and_keeps_state() {
+        let info = make_info("", 1);
+        let result = info.switch_to_requested_state();
+        assert!(result.is_ok());
+        assert_eq!(info.read_state().unwrap(), DeploymentState::Init);
+    }
+
+    #[test]
+    fn switch_to_requested_state_with_request_returns_err_and_applies_state() {
+        let info = make_info("", 1);
+        info.set_requested_state(DeploymentState::Cancelled)
+            .unwrap();
+
+        let result = info.switch_to_requested_state();
+        assert!(
+            result.is_err(),
+            "switch_to_requested_state returns Err when a switch actually happened"
+        );
+        assert_eq!(info.read_state().unwrap(), DeploymentState::Cancelled);
+
+        let second = info.switch_to_requested_state();
+        assert!(second.is_ok());
+    }
+}

@@ -58,3 +58,41 @@ impl DeploymentCache {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::entity::options::make_test_options;
+
+    fn make_info(release_id: u64) -> DeploymentInformation {
+        let options = make_test_options("", "");
+        DeploymentInformation::new("v1.0.0".to_string(), release_id, &options)
+    }
+
+    #[test]
+    fn read_unknown_id_returns_none() {
+        let cache = DeploymentCache::new(60);
+        let result = cache.read_deployment(&999).unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn insert_read_remove_lifecycle() {
+        let cache = DeploymentCache::new(60);
+        cache.insert_deployment(42, make_info(42)).unwrap();
+        assert_eq!(cache.read_deployment(&42).unwrap().unwrap().release_id, 42);
+
+        cache.remove_deployment(&42).unwrap();
+        assert!(cache.read_deployment(&42).unwrap().is_none());
+    }
+
+    #[test]
+    fn entry_expires_after_lifespan() {
+        let cache = DeploymentCache::new(0);
+        cache.insert_deployment(42, make_info(42)).unwrap();
+        assert!(
+            cache.read_deployment(&42).unwrap().is_none(),
+            "0s lifespan should expire the entry immediately"
+        );
+    }
+}
