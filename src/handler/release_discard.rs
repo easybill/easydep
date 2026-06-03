@@ -37,7 +37,7 @@ pub(crate) fn discard_oldest_release(options: &Options) -> anyhow::Result<(), an
 
     // sort the parsed release directories, ascending
     // then remove the oldest release (only remove one release per call)
-    release_directories.sort_by(|left, right| left.1.cmp(&right.1));
+    release_directories.sort_by_key(|left| left.1);
     if let Some(release_to_remove) = release_directories.first() {
         let (release_directory, release_id) = release_to_remove;
         if release_directory.exists() {

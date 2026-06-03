@@ -121,14 +121,20 @@ mod tests {
     #[test]
     fn initial_state_is_init() {
         let info = make_info("", 1);
-        assert_eq!(info.read_state().unwrap(), DeploymentState::Init);
+        assert_eq!(
+            info.read_state().map_err(|e| e.to_string()),
+            Ok(DeploymentState::Init)
+        );
     }
 
     #[test]
     fn set_state_then_read_state_roundtrip() {
         let info = make_info("", 1);
         info.set_state(DeploymentState::Publishable).unwrap();
-        assert_eq!(info.read_state().unwrap(), DeploymentState::Publishable);
+        assert_eq!(
+            info.read_state().map_err(|e| e.to_string()),
+            Ok(DeploymentState::Publishable)
+        );
     }
 
     #[test]
@@ -136,7 +142,10 @@ mod tests {
         let info = make_info("", 1);
         let result = info.switch_to_requested_state();
         assert!(result.is_ok());
-        assert_eq!(info.read_state().unwrap(), DeploymentState::Init);
+        assert_eq!(
+            info.read_state().map_err(|e| e.to_string()),
+            Ok(DeploymentState::Init)
+        );
     }
 
     #[test]
@@ -150,7 +159,10 @@ mod tests {
             result.is_err(),
             "switch_to_requested_state returns Err when a switch actually happened"
         );
-        assert_eq!(info.read_state().unwrap(), DeploymentState::Cancelled);
+        assert_eq!(
+            info.read_state().map_err(|e| e.to_string()),
+            Ok(DeploymentState::Cancelled)
+        );
 
         let second = info.switch_to_requested_state();
         assert!(second.is_ok());
