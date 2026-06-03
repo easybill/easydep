@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["easybill"]
 
 edition = "2021"
-rust-version = "1.56.1" # 2021 edition requires 1.56
+rust-version = "1.70"
 
 license = "MIT"
 publish = false
