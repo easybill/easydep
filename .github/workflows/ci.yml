@@ -26,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@nightly
@@ -34,12 +34,31 @@ jobs:
           components: rustfmt, clippy
 
       - name: Run rustfmt
-        uses: clechasseur/rs-fmt-check@v2
+        uses: clechasseur/rs-fmt-check@v3
 
       - name: Run clippy
-        uses: clechasseur/rs-clippy-check@v3
+        uses: clechasseur/rs-clippy-check@v5
+
+  test:
+    needs: [ "check" ]
+    name: Run tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Initialize Rust caching
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run tests
+        run: cargo test --all-targets
 
   build:
+    needs: [ "test" ]
     permissions: read-all
     runs-on: ${{ matrix.platform.os }}
     name: Compile ${{ matrix.platform.target }} / ${{ matrix.platform.os }}
@@ -57,7 +76,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -71,10 +90,10 @@ jobs:
           key: ${{ matrix.platform.target }}
 
       - name: Compile Binary
-        uses: clechasseur/rs-cargo@v2
+        uses: clechasseur/rs-cargo@v4
         with:
+          tool: cross
           command: build
-          use-cross: true
           args: --release --target ${{ matrix.platform.target }} --bin easydep
 
       - name: Move artifacts
@@ -83,13 +102,13 @@ jobs:
           cp target/${{ matrix.platform.target }}/release/easydep artifact/easydep_${{ matrix.platform.osn }}_${{ matrix.platform.arch }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           path: artifact/easydep_${{ matrix.platform.osn }}_${{ matrix.platform.arch }}
           name: easydep_${{ matrix.platform.osn }}_${{ matrix.platform.arch }}
 
   release:
-    needs: [ "check", "build" ]
+    needs: [ "check", "test", "build" ]
     name: Publish Release
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release == 'true' }}
