@@ -45,9 +45,9 @@ server finishing with one version of the deployment way before the others.
 * `EASYDEP_RELEASE_CACHE_TIME`: The time (in minutes) a publish request should be cached locally on the server. Within
   the given timespan the request to prepare and cancel/publish the deployment must be made. This variable defaults
   to `15`.
-* `EASYDEP_MAX_STORED_RELEASES`: The maximum amount of old releases to keep. If the given limit is exceeded, the oldest
-  releases will be deleted when a new releases is executed. The given value can be any positive number than is larger
-  than 2. This variable defaults to `10`.
+* `EASYDEP_MAX_STORED_RELEASES`: The maximum amount of old releases to keep. If the given limit is exceeded, all releases
+  beyond that limit will be deleted (oldest first) when a new release is published. The given value can be any positive
+  number that is larger than 2. This variable defaults to `5`.
 * `EASYDEP_LOG_DEBUG`: Set this variable to `true` to enable debug logging. This variable defaults to `false`.
 * `EASYDEP_REVISION_FILE`: Sets the name of the file to write the current git revision to. If set to an empty string the
   current revision is not written to any file. This variable defaults to `REVISION`.
