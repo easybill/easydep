@@ -25,7 +25,7 @@ pub(crate) async fn read_latest_release(
     // build an octocrab instance and authenticate it as the target installation
     let octocrab = authenticated_github_client(options).await?;
     let installation = find_installation(&octocrab, options).await?;
-    let app_scoped_octocrab = octocrab.installation(installation.id);
+    let app_scoped_octocrab = octocrab.installation(installation.id)?;
 
     // list the last 100 releases and find the latest for the current env
     let repo_handler =
