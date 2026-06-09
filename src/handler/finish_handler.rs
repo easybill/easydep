@@ -1,7 +1,7 @@
 use crate::entity::deployment::DeploymentInformation;
 use crate::entity::options::Options;
 use crate::handler::call_followup_lifecycle_script;
-use crate::handler::release_discard::discard_oldest_release;
+use crate::handler::release_discard::discard_old_releases;
 use crate::helper::process_helper::CommandResult;
 use log::{error, info};
 use std::path::Path;
@@ -16,10 +16,10 @@ pub(crate) async fn finish_deployment(
     let finish_script_result =
         call_followup_lifecycle_script(options, &deploy_base_dir, "publish", result).await;
 
-    // cleanup (by removing the oldest release)
-    info!("Published one release, trying to discord the oldest release");
-    if let Err(error) = discard_oldest_release(options) {
-        error!("Unable to delete oldest release: {}", error);
+    // cleanup (by removing all releases that exceed the configured limit)
+    info!("Published one release, trying to discard old releases");
+    if let Err(error) = discard_old_releases(options) {
+        error!("Unable to delete old releases: {}", error);
     }
 
     finish_script_result

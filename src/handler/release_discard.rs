@@ -3,7 +3,7 @@ use log::info;
 use std::fs::{read_dir, remove_dir_all};
 use std::path::{Path, PathBuf};
 
-pub(crate) fn discard_oldest_release(options: &Options) -> anyhow::Result<(), anyhow::Error> {
+pub(crate) fn discard_old_releases(options: &Options) -> anyhow::Result<(), anyhow::Error> {
     let max_stored_releases = options.max_releases_to_store as usize;
     let base_directory = Path::new(&options.base_directory).join("releases");
 
@@ -35,13 +35,13 @@ pub(crate) fn discard_oldest_release(options: &Options) -> anyhow::Result<(), an
         return Ok(());
     }
 
-    // sort the parsed release directories, ascending
-    // then remove the oldest release (only remove one release per call)
+    // sort the parsed release directories ascending, then remove every release that
+    // exceeds the configured limit so any accumulated backlog is cleaned up at once
     release_directories.sort_by_key(|left| left.1);
-    if let Some(release_to_remove) = release_directories.first() {
-        let (release_directory, release_id) = release_to_remove;
+    let releases_to_remove = stored_releases - max_stored_releases;
+    for (release_directory, release_id) in release_directories.iter().take(releases_to_remove) {
         if release_directory.exists() {
-            info!("Removing oldest stored release {}", release_id);
+            info!("Removing old stored release {}", release_id);
             remove_dir_all(release_directory)?;
         }
     }
@@ -75,7 +75,7 @@ mod tests {
         make_release_dir(tmp.path(), "300");
 
         let options = options_for(tmp.path(), 3);
-        discard_oldest_release(&options).unwrap();
+        discard_old_releases(&options).unwrap();
 
         assert!(releases.join("100").exists());
         assert!(releases.join("200").exists());
@@ -83,7 +83,7 @@ mod tests {
     }
 
     #[test]
-    fn removes_oldest_by_numeric_id_not_lexicographic() {
+    fn removes_all_excess_releases_by_numeric_id_not_lexicographic() {
         let tmp = tempfile::tempdir().unwrap();
         let releases = tmp.path().join("releases");
         create_dir_all(&releases).unwrap();
@@ -92,11 +92,45 @@ mod tests {
         }
 
         let options = options_for(tmp.path(), 3);
-        discard_oldest_release(&options).unwrap();
+        discard_old_releases(&options).unwrap();
 
-        assert!(!releases.join("50").exists(), "50 should have been removed");
-        for id in ["100", "150", "200", "300"] {
+        for id in ["50", "100"] {
+            assert!(
+                !releases.join(id).exists(),
+                "{} should have been removed",
+                id
+            );
+        }
+        for id in ["150", "200", "300"] {
             assert!(releases.join(id).exists(), "{} should still exist", id);
+        }
+    }
+
+    #[test]
+    fn removes_large_backlog_down_to_limit_in_one_call() {
+        let tmp = tempfile::tempdir().unwrap();
+        let releases = tmp.path().join("releases");
+        create_dir_all(&releases).unwrap();
+        for id in 1..=20u64 {
+            make_release_dir(tmp.path(), &id.to_string());
+        }
+
+        let options = options_for(tmp.path(), 5);
+        discard_old_releases(&options).unwrap();
+
+        for id in 1..=15u64 {
+            assert!(
+                !releases.join(id.to_string()).exists(),
+                "{} should have been removed",
+                id
+            );
+        }
+        for id in 16..=20u64 {
+            assert!(
+                releases.join(id.to_string()).exists(),
+                "{} should still exist",
+                id
+            );
         }
     }
 
@@ -110,7 +144,7 @@ mod tests {
         make_release_dir(tmp.path(), "abc");
 
         let options = options_for(tmp.path(), 1);
-        discard_oldest_release(&options).unwrap();
+        discard_old_releases(&options).unwrap();
 
         assert!(
             !releases.join("100").exists(),
@@ -133,7 +167,7 @@ mod tests {
         make_release_dir(tmp.path(), "def");
 
         let options = options_for(tmp.path(), 1);
-        discard_oldest_release(&options).unwrap();
+        discard_old_releases(&options).unwrap();
 
         assert!(
             releases.join("100").exists(),
@@ -153,7 +187,7 @@ mod tests {
         write(releases.join("50"), "not a directory").unwrap();
 
         let options = options_for(tmp.path(), 1);
-        discard_oldest_release(&options).unwrap();
+        discard_old_releases(&options).unwrap();
 
         assert!(!releases.join("100").exists());
         assert!(releases.join("200").exists());
@@ -164,7 +198,7 @@ mod tests {
     fn missing_releases_directory_returns_err() {
         let tmp = tempfile::tempdir().unwrap();
         let options = options_for(tmp.path(), 3);
-        let result = discard_oldest_release(&options);
+        let result = discard_old_releases(&options);
         assert!(result.is_err());
     }
 }

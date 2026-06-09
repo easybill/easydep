@@ -52,7 +52,7 @@ pub(crate) struct Options {
     #[arg(
         long = "max-stored-releases",
         env = "EASYDEP_MAX_STORED_RELEASES",
-        default_value_t = 10,
+        default_value_t = 5,
         value_parser = clap::value_parser!(u64).range(3..)
     )]
     pub max_releases_to_store: u64,
@@ -116,7 +116,7 @@ pub(crate) fn make_test_options(base_directory: &str, environment: &str) -> Opti
         deploy_link_dir: String::from("current"),
         deploy_publish_delay_seconds: 15,
         release_cache_minutes: 15,
-        max_releases_to_store: 10,
+        max_releases_to_store: 5,
         git_revision_file: String::from("REVISION"),
         environment: environment.to_string(),
         additional_symlinks: String::new(),
