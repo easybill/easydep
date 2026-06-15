@@ -30,7 +30,7 @@ octocrab = "0.53.*"
 crossbeam = "0.8.*"
 serde_derive = "1.0.*"
 jsonwebtoken = "10.4.*"
-tokio = { version = "1.38.*", features = ["full"] }
+tokio = { version = "1.52.*", features = ["full"] }
 chrono = { version = "0.4.*", default-features = false }
 clap = { version = "4.6.*", features = ["derive", "env"] }
 
