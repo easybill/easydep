@@ -43,8 +43,8 @@ async fn main() -> anyhow::Result<(), anyhow::Error> {
     handle_initial_start(&options).await?;
 
     // build the deployment cache
-    let cache_time_seconds = options.release_cache_minutes * 60;
-    let deploy_cache = DeploymentCache::new(cache_time_seconds);
+    let cache_time = Duration::from_secs(options.release_cache_minutes * 60);
+    let deploy_cache = DeploymentCache::new(cache_time)?;
 
     // build the http router
     let app = Router::new()

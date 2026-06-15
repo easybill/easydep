@@ -1,20 +1,21 @@
 use crate::entity::deployment::DeploymentInformation;
 use anyhow::anyhow;
-use cached::{Cached, TimedCache};
+use cached::{Cached, TtlCache};
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 #[derive(Clone, Debug)]
 pub(crate) struct DeploymentCache {
-    cache: Arc<Mutex<TimedCache<u64, Arc<DeploymentInformation>>>>,
+    cache: Arc<Mutex<TtlCache<u64, Arc<DeploymentInformation>>>>,
 }
 
 impl DeploymentCache {
-    pub fn new(cache_time_secs: u64) -> Self {
-        let cache: TimedCache<u64, Arc<DeploymentInformation>> =
-            TimedCache::with_lifespan_and_refresh(cache_time_secs, true);
-        Self {
+    pub fn new(cache_time: Duration) -> anyhow::Result<Self> {
+        let cache: TtlCache<u64, Arc<DeploymentInformation>> =
+            TtlCache::builder().ttl(cache_time).refresh(true).build()?;
+        Ok(Self {
             cache: Arc::new(Mutex::new(cache)),
-        }
+        })
     }
 
     pub fn insert_deployment(
@@ -71,14 +72,14 @@ mod tests {
 
     #[test]
     fn read_unknown_id_returns_none() {
-        let cache = DeploymentCache::new(60);
+        let cache = DeploymentCache::new(Duration::from_secs(60)).unwrap();
         let result = cache.read_deployment(&999).unwrap();
         assert!(result.is_none());
     }
 
     #[test]
     fn insert_read_remove_lifecycle() {
-        let cache = DeploymentCache::new(60);
+        let cache = DeploymentCache::new(Duration::from_secs(60)).unwrap();
         cache.insert_deployment(42, make_info(42)).unwrap();
         assert_eq!(cache.read_deployment(&42).unwrap().unwrap().release_id, 42);
 
@@ -88,11 +89,11 @@ mod tests {
 
     #[test]
     fn entry_expires_after_lifespan() {
-        let cache = DeploymentCache::new(0);
+        let cache = DeploymentCache::new(Duration::from_millis(10)).unwrap();
         cache.insert_deployment(42, make_info(42)).unwrap();
-        assert!(
-            cache.read_deployment(&42).unwrap().is_none(),
-            "0s lifespan should expire the entry immediately"
-        );
+        assert_eq!(cache.read_deployment(&42).unwrap().unwrap().release_id, 42);
+
+        std::thread::sleep(Duration::from_millis(20));
+        assert!(cache.read_deployment(&42).unwrap().is_none());
     }
 }
