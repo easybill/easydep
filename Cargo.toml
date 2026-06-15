@@ -20,7 +20,7 @@ codegen-units = 1
 
 [dependencies]
 anyhow = "*"
-axum = "0.7.*"
+axum = "0.8.*"
 serde = "1.0.*"
 cached = "0.49.*"
 secrecy = "0.10.*"
