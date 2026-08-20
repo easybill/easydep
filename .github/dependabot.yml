@@ -14,3 +14,9 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Europe/Berlin"
+    allow:
+      - dependency-type: "all"
+    groups:
+      cargo-dependencies:
+        patterns:
+          - "*"
